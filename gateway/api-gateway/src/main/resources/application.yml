@@ -81,6 +81,10 @@ management:
     health:
       show-details: always
 
+    metrics:
+      tags:
+        application: ${spring.application.name}
+
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG

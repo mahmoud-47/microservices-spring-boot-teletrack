@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: config-server
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,routes,metrics,prometheus
+
+    health:
+      show-details: always
+
+    metrics:
+      tags:
+        application: ${spring.application.name}
+
+server:
+  port: 8888

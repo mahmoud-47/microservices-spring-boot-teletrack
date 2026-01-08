@@ -11,3 +11,17 @@ server:
 spring:
   application:
     name: discovery-service
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,routes,metrics,prometheus
+
+    health:
+      show-details: always
+
+    metrics:
+      tags:
+        application: ${spring.application.name}
