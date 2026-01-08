@@ -8,6 +8,7 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: postgres
     ports:
       - "5433:5432"
     volumes:
@@ -20,6 +21,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   # Zookeeper
   zookeeper:
@@ -53,6 +55,7 @@ services:
       interval: 10s
       timeout: 10s
       retries: 5
+      start_period: 20s
 
   # Eureka Discovery Service
   discovery-service:
@@ -68,9 +71,10 @@ services:
       - teletrack-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
-      interval: 10s
-      timeout: 5s
+      interval: 15s
+      timeout: 10s
       retries: 5
+      start_period: 60s  # Discovery takes ~35s to start
 
   # Config Service
   config-service:
@@ -84,15 +88,16 @@ services:
     ports:
       - "${CONFIG_PORT}:8888"
     environment:
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_PROFILES_ACTIVE: docker,native
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_SERVER}
     networks:
       - teletrack-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
-      interval: 10s
-      timeout: 5s
+      interval: 15s
+      timeout: 10s
       retries: 5
+      start_period: 40s
 
   # User Service
   user-service:
@@ -120,6 +125,12 @@ services:
       JWT_EXPIRATION: ${JWT_EXPIRATION}
     networks:
       - teletrack-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   # Incident Service
   incident-service:
@@ -148,6 +159,12 @@ services:
       SPRING_CLOUD_CONFIG_URI: ${CONFIG_SERVER}
     networks:
       - teletrack-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   # Notification Service
   notification-service:
@@ -176,6 +193,12 @@ services:
       MAIL_FROM: ${MAIL_FROM}
     networks:
       - teletrack-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   # Reporting Service
   reporting-service:
@@ -184,8 +207,6 @@ services:
       dockerfile: services/reporting-service/Dockerfile
     container_name: teletrack-reporting-service
     depends_on:
-      postgres:
-        condition: service_healthy
       discovery-service:
         condition: service_healthy
       config-service:
@@ -194,13 +215,16 @@ services:
       - "${REPORTING_SERVICE_PORT}:8084"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB_INCIDENT}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_SERVER}
       SPRING_CLOUD_CONFIG_URI: ${CONFIG_SERVER}
     networks:
       - teletrack-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   # API Gateway
   api-gateway:
@@ -221,6 +245,12 @@ services:
       SPRING_CLOUD_CONFIG_URI: ${CONFIG_SERVER}
     networks:
       - teletrack-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   postgres-data:
