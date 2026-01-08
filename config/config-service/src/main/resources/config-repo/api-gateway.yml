@@ -38,6 +38,10 @@ spring:
                 - Path=/api/v1/reports/**
               filters:
                 - RewritePath=/api/v1/reports/(?<segment>.*), /${segment}
+                - name: CircuitBreaker
+                  args:
+                    name: reportingServiceCircuitBreaker
+                    fallbackUri: forward:/fallback/reporting
             # Notification Service Routes (for health checks)
             - id: notification-service
               uri: lb://notification-service
@@ -67,6 +71,11 @@ resilience4j:
         wait-duration-in-open-state: 10000
         permitted-number-of-calls-in-half-open-state: 3
       incidentServiceCircuitBreaker:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10000
+        permitted-number-of-calls-in-half-open-state: 3
+      reportingServiceCircuitBreaker:
         sliding-window-size: 10
         failure-rate-threshold: 50
         wait-duration-in-open-state: 10000
