@@ -104,6 +104,12 @@
 			<artifactId>spring-cloud-starter-loadbalancer</artifactId>
 		</dependency>
 
+		<!-- Spring Security (for JWT validation) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
 		<!-- ========== TEST DEPENDENCIES ========== -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
