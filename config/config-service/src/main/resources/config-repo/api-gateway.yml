@@ -1,0 +1,91 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: true
+              lower-case-service-id: true
+          routes:
+            - id: user-service
+              uri: lb://user-service
+              predicates:
+                - Path=/api/v1/users/**
+              filters:
+                - RewritePath=/api/v1/users/(?<segment>.*), /${segment}
+                - name: CircuitBreaker
+                  args:
+                    name: userServiceCircuitBreaker
+                    fallbackUri: forward:/fallback/users
+            # Incident Service Routes
+            - id: incident-service
+              uri: lb://incident-service
+              predicates:
+                - Path=/api/v1/incidents/**
+              filters:
+                - RewritePath=/api/v1/incidents/(?<segment>.*), /${segment}
+                - name: CircuitBreaker
+                  args:
+                    name: incidentServiceCircuitBreaker
+                    fallbackUri: forward:/fallback/incidents
+            # Reporting Service Routes
+            - id: reporting-service
+              uri: lb://reporting-service
+              predicates:
+                - Path=/api/v1/reports/**
+              filters:
+                - RewritePath=/api/v1/reports/(?<segment>.*), /${segment}
+            # Notification Service Routes (for health checks)
+            - id: notification-service
+              uri: lb://notification-service
+              predicates:
+                - Path=/api/v1/notifications/**
+              filters:
+                - RewritePath=/api/v1/notifications/(?<segment>.*), /${segment}
+
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${random.value}
+
+# Resilience4J Circuit Breaker Configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      userServiceCircuitBreaker:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10000
+        permitted-number-of-calls-in-half-open-state: 3
+      incidentServiceCircuitBreaker:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10000
+        permitted-number-of-calls-in-half-open-state: 3
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,routes,metrics,prometheus
+
+    health:
+      show-details: always
+
+    metrics:
+      tags:
+        application: ${spring.application.name}
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.cloud.loadbalancer: DEBUG
