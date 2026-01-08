@@ -47,9 +47,6 @@
         <postgresql.version>42.7.1</postgresql.version>
         <liquibase.version>4.25.0</liquibase.version>
 
-        <!-- Messaging -->
-        <kafka.version>3.6.1</kafka.version>
-
         <!-- Utilities -->
         <lombok.version>1.18.30</lombok.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
@@ -112,13 +109,6 @@
                 <groupId>org.liquibase</groupId>
                 <artifactId>liquibase-core</artifactId>
                 <version>${liquibase.version}</version>
-            </dependency>
-
-            <!-- Kafka -->
-            <dependency>
-                <groupId>org.springframework.kafka</groupId>
-                <artifactId>spring-kafka</artifactId>
-                <version>${kafka.version}</version>
             </dependency>
 
             <!-- Lombok -->
