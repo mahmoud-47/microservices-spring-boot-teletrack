@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
@@ -7,34 +8,70 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.0</version>
+        <version>3.5.9</version>
         <relativePath/>
     </parent>
 
-    <groupId>com.udemylike</groupId>
-    <artifactId>edu-platform</artifactId>
+    <groupId>com.teletrack</groupId>
+    <artifactId>teletrack360-parent</artifactId>
     <version>1.0.0</version>
     <packaging>pom</packaging>
 
-    <name>Educational Platform - Parent</name>
+    <name>TeleTrack360 - Parent</name>
+    <description>Parent POM for TeleTrack360 Incident Management Platform</description>
 
     <!-- List of child modules -->
     <modules>
-        <module>auth-service</module>
-        <module>course-service</module>
-        <module>assessment-service</module>
-        <module>forum-service</module>
-        <module>notifications-service</module>
-        <module>gateway-service</module>
-        <module>discovery-service</module>
-        <module>api-library</module>
+        <module>shared/common-utils</module>
+        <module>discovery/discovery-service</module>
+        <module>config/config-service</module>
+        <module>gateway/api-gateway</module>
+        <module>services/user-service</module>
+        <module>services/incident-service</module>
+        <module>services/notification-service</module>
+        <module>services/reporting-service</module>
     </modules>
 
     <properties>
+        <!-- Java Version -->
         <java.version>21</java.version>
-        <spring.boot.version>3.3.0</spring.boot.version>
-        <!-- Changed from spring.cloud.version to spring-cloud.version -->
-        <spring-cloud.version>2023.0.1</spring-cloud.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Spring Versions -->
+        <spring.boot.version>3.5.9</spring.boot.version>
+        <spring-cloud.version>2025.0.1</spring-cloud.version>
+
+        <!-- Database & Persistence -->
+        <postgresql.version>42.7.1</postgresql.version>
+        <liquibase.version>4.25.0</liquibase.version>
+
+        <!-- Messaging -->
+        <kafka.version>3.6.1</kafka.version>
+
+        <!-- Utilities -->
+        <lombok.version>1.18.30</lombok.version>
+        <mapstruct.version>1.5.5.Final</mapstruct.version>
+
+        <!-- Security -->
+        <jwt.version>0.12.3</jwt.version>
+
+        <!-- Documentation -->
+        <springdoc.version>2.3.0</springdoc.version>
+
+        <!-- Resilience -->
+        <resilience4j.version>2.2.0</resilience4j.version>
+
+        <!-- Testing -->
+        <testcontainers.version>1.19.3</testcontainers.version>
+
+        <!-- Monitoring -->
+        <micrometer.version>1.12.1</micrometer.version>
+
+        <!-- Plugin Versions -->
+        <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
+        <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -57,11 +94,122 @@
                 <scope>import</scope>
             </dependency>
 
-            <!-- Internal API Library -->
+            <!-- Internal Common Utils Library -->
             <dependency>
-                <groupId>com.udemylike</groupId>
-                <artifactId>api-library</artifactId>
-                <version>0.0.1-SNAPSHOT</version>
+                <groupId>com.teletrack</groupId>
+                <artifactId>common-utils</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Database -->
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${postgresql.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.liquibase</groupId>
+                <artifactId>liquibase-core</artifactId>
+                <version>${liquibase.version}</version>
+            </dependency>
+
+            <!-- Kafka -->
+            <dependency>
+                <groupId>org.springframework.kafka</groupId>
+                <artifactId>spring-kafka</artifactId>
+                <version>${kafka.version}</version>
+            </dependency>
+
+            <!-- Lombok -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- MapStruct -->
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct</artifactId>
+                <version>${mapstruct.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct-processor</artifactId>
+                <version>${mapstruct.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- JWT -->
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jwt.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
+                <version>${jwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+
+            <!-- SpringDoc OpenAPI (Swagger) -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+
+            <!-- Resilience4J -->
+            <dependency>
+                <groupId>io.github.resilience4j</groupId>
+                <artifactId>resilience4j-spring-boot3</artifactId>
+                <version>${resilience4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.resilience4j</groupId>
+                <artifactId>resilience4j-circuitbreaker</artifactId>
+                <version>${resilience4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.resilience4j</groupId>
+                <artifactId>resilience4j-retry</artifactId>
+                <version>${resilience4j.version}</version>
+            </dependency>
+
+            <!-- Testcontainers BOM -->
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>${testcontainers.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Micrometer (Metrics) -->
+            <dependency>
+                <groupId>io.micrometer</groupId>
+                <artifactId>micrometer-registry-prometheus</artifactId>
+                <version>${micrometer.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.micrometer</groupId>
+                <artifactId>micrometer-tracing-bridge-brave</artifactId>
+                <version>${micrometer.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -69,22 +217,158 @@
     <build>
         <pluginManagement>
             <plugins>
+                <!-- Spring Boot Maven Plugin -->
                 <plugin>
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
                     <version>${spring.boot.version}</version>
+                    <configuration>
+                        <excludes>
+                            <exclude>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                            </exclude>
+                        </excludes>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>repackage</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
+
+                <!-- Maven Compiler Plugin -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.11.0</version>
+                    <version>${maven-compiler-plugin.version}</version>
                     <configuration>
                         <source>${java.version}</source>
                         <target>${java.version}</target>
                         <release>${java.version}</release>
+                        <annotationProcessorPaths>
+                            <!-- Lombok -->
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                            <!-- MapStruct -->
+                            <path>
+                                <groupId>org.mapstruct</groupId>
+                                <artifactId>mapstruct-processor</artifactId>
+                                <version>${mapstruct.version}</version>
+                            </path>
+                            <!-- Lombok + MapStruct binding -->
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok-mapstruct-binding</artifactId>
+                                <version>0.2.0</version>
+                            </path>
+                        </annotationProcessorPaths>
                     </configuration>
+                </plugin>
+
+                <!-- JaCoCo Code Coverage -->
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco-maven-plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>prepare-agent</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>report</id>
+                            <phase>test</phase>
+                            <goals>
+                                <goal>report</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>jacoco-check</id>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                            <configuration>
+                                <rules>
+                                    <rule>
+                                        <element>PACKAGE</element>
+                                        <limits>
+                                            <limit>
+                                                <counter>LINE</counter>
+                                                <value>COVEREDRATIO</value>
+                                                <minimum>0.80</minimum>
+                                            </limit>
+                                        </limits>
+                                    </rule>
+                                </rules>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <!-- Maven Surefire (Unit Tests) -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.0.0</version>
+                    <configuration>
+                        <includes>
+                            <include>**/*Test.java</include>
+                            <include>**/*Tests.java</include>
+                        </includes>
+                    </configuration>
+                </plugin>
+
+                <!-- Maven Failsafe (Integration Tests) -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>3.0.0</version>
+                    <configuration>
+                        <includes>
+                            <include>**/*IT.java</include>
+                            <include>**/*IntegrationTest.java</include>
+                        </includes>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>integration-test</goal>
+                                <goal>verify</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
             </plugins>
         </pluginManagement>
     </build>
+
+    <!-- Repositories (for snapshot versions) -->
+    <repositories>
+        <repository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/milestone</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/milestone</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
 </project>
