@@ -5,9 +5,9 @@ spring:
   application:
     name: incident-service
   datasource:
-    url: jdbc:postgresql://localhost:5433/incidents_db
-    username: postgres
-    password: postgres
+    url: ${INCIDENT_DB_URL:jdbc:postgresql://localhost:5433/incidents_db}
+    username: ${INCIDENT_DB_USERNAME:postgres}
+    password: ${INCIDENT_DB_PASSWORD:postgres}
   jpa:
     hibernate:
       ddl-auto: validate

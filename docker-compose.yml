@@ -6,10 +6,11 @@ services:
     image: postgres:15-alpine
     container_name: teletrack-postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: postgres
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./deployment/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
@@ -20,6 +21,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
+    restart: unless-stopped
 
   # Zookeeper
   zookeeper:
@@ -30,6 +33,7 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     networks:
       - teletrack-network
+    restart: unless-stopped
 
   # Kafka
   kafka:
@@ -53,52 +57,55 @@ services:
       interval: 10s
       timeout: 10s
       retries: 5
+      start_period: 20s
+    restart: unless-stopped
 
   # Eureka Discovery Service
   discovery-service:
-    build:
-      context: .
-      dockerfile: discovery/discovery-service/Dockerfile
+    image: ${DOCKER_REGISTRY:-}teletrack360-discovery-service:${IMAGE_TAG:-latest}
     container_name: teletrack-discovery
     ports:
-      - "${EUREKA_PORT}:8761"
+      - "8761:8761"
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8761
     networks:
       - teletrack-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
-      interval: 10s
-      timeout: 5s
+      interval: 15s
+      timeout: 10s
       retries: 5
+      start_period: 60s
+    restart: unless-stopped
 
   # Config Service
   config-service:
-    build:
-      context: .
-      dockerfile: config/config-service/Dockerfile
+    image: ${DOCKER_REGISTRY:-}teletrack360-config-service:${IMAGE_TAG:-latest}
     container_name: teletrack-config
     depends_on:
       discovery-service:
         condition: service_healthy
     ports:
-      - "${CONFIG_PORT}:8888"
+      - "8888:8888"
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_SERVER}
+      SPRING_PROFILES_ACTIVE: docker,native
+      SERVER_PORT: 8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCHLOCATIONS: classpath:/config-repo
     networks:
       - teletrack-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
-      interval: 10s
-      timeout: 5s
+      interval: 15s
+      timeout: 10s
       retries: 5
+      start_period: 40s
+    restart: unless-stopped
 
   # User Service
   user-service:
-    build:
-      context: .
-      dockerfile: services/user-service/Dockerfile
+    image: ${DOCKER_REGISTRY:-}teletrack360-user-service:${IMAGE_TAG:-latest}
     container_name: teletrack-user-service
     depends_on:
       postgres:
@@ -108,24 +115,30 @@ services:
       config-service:
         condition: service_healthy
     ports:
-      - "${USER_SERVICE_PORT}:8081"
+      - "8081:8081"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB_USER}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_SERVER}
-      SPRING_CLOUD_CONFIG_URI: ${CONFIG_SERVER}
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      SERVER_PORT: 8081
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB_USER:-user_db}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      SPRING_CLOUD_CONFIG_URI: http://config-service:8888
+      JWT_SECRET: ${JWT_SECRET:-mySecretKeyThatIsAtLeast256BitsLongForHS256Algorithm12345}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-3600000}
     networks:
       - teletrack-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
 
   # Incident Service
   incident-service:
-    build:
-      context: .
-      dockerfile: services/incident-service/Dockerfile
+    image: ${DOCKER_REGISTRY:-}teletrack360-incident-service:${IMAGE_TAG:-latest}
     container_name: teletrack-incident-service
     depends_on:
       postgres:
@@ -137,23 +150,29 @@ services:
       config-service:
         condition: service_healthy
     ports:
-      - "${INCIDENT_SERVICE_PORT}:8082"
+      - "8082:8082"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB_INCIDENT}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_SERVER}
-      SPRING_CLOUD_CONFIG_URI: ${CONFIG_SERVER}
+      SERVER_PORT: 8082
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB_INCIDENT:-incidents_db}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      SPRING_CLOUD_CONFIG_URI: http://config-service:8888
     networks:
       - teletrack-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
 
   # Notification Service
   notification-service:
-    build:
-      context: .
-      dockerfile: services/notification-service/Dockerfile
+    image: ${DOCKER_REGISTRY:-}teletrack360-notification-service:${IMAGE_TAG:-latest}
     container_name: teletrack-notification-service
     depends_on:
       kafka:
@@ -163,50 +182,57 @@ services:
       config-service:
         condition: service_healthy
     ports:
-      - "${NOTIFICATION_SERVICE_PORT}:8083"
+      - "8083:8083"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_SERVER}
-      SPRING_CLOUD_CONFIG_URI: ${CONFIG_SERVER}
-      SPRING_MAIL_HOST: ${MAIL_HOST}
-      SPRING_MAIL_PORT: ${MAIL_PORT}
+      SERVER_PORT: 8083
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      SPRING_CLOUD_CONFIG_URI: http://config-service:8888
+      SPRING_MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      SPRING_MAIL_PORT: ${MAIL_PORT:-587}
       SPRING_MAIL_USERNAME: ${MAIL_USERNAME}
       SPRING_MAIL_PASSWORD: ${MAIL_PASSWORD}
-      MAIL_FROM: ${MAIL_FROM}
+      MAIL_FROM: ${MAIL_FROM:-noreply@teletrack360.com}
     networks:
       - teletrack-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
 
   # Reporting Service
   reporting-service:
-    build:
-      context: .
-      dockerfile: services/reporting-service/Dockerfile
+    image: ${DOCKER_REGISTRY:-}teletrack360-reporting-service:${IMAGE_TAG:-latest}
     container_name: teletrack-reporting-service
     depends_on:
-      postgres:
-        condition: service_healthy
       discovery-service:
         condition: service_healthy
       config-service:
         condition: service_healthy
     ports:
-      - "${REPORTING_SERVICE_PORT}:8084"
+      - "8084:8084"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB_INCIDENT}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_SERVER}
-      SPRING_CLOUD_CONFIG_URI: ${CONFIG_SERVER}
+      SERVER_PORT: 8084
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      SPRING_CLOUD_CONFIG_URI: http://config-service:8888
     networks:
       - teletrack-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
 
   # API Gateway
   api-gateway:
-    build:
-      context: .
-      dockerfile: gateway/api-gateway/Dockerfile
+    image: ${DOCKER_REGISTRY:-}teletrack360-api-gateway:${IMAGE_TAG:-latest}
     container_name: teletrack-gateway
     depends_on:
       discovery-service:
@@ -214,16 +240,25 @@ services:
       config-service:
         condition: service_healthy
     ports:
-      - "${GATEWAY_PORT}:8080"
+      - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_SERVER}
-      SPRING_CLOUD_CONFIG_URI: ${CONFIG_SERVER}
+      SERVER_PORT: 8080
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      SPRING_CLOUD_CONFIG_URI: http://config-service:8888
     networks:
       - teletrack-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
 
 volumes:
   postgres-data:
+    driver: local
 
 networks:
   teletrack-network:

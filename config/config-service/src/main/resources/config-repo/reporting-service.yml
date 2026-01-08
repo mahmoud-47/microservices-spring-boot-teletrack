@@ -5,9 +5,9 @@ spring:
   application:
     name: reporting-service
   datasource:
-    url: jdbc:postgresql://localhost:5433/reporting_db
-    username: postgres
-    password: postgres
+    url: ${REPORTING_DB_URL:jdbc:postgresql://localhost:5433/reporting_db}
+    username: ${REPORTING_DB_USERNAME:postgres}
+    password: ${REPORTING_DB_PASSWORD:postgres}
   jpa:
     hibernate:
       ddl-auto: validate
