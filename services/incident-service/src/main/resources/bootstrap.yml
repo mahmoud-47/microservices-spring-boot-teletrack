@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: incident-service
+  cloud:
+    config:
+      uri: ${SPRING_CLOUD_CONFIG_URI:http://localhost:8888}
+      fail-fast: true
+      retry:
+        max-attempts: 5
+        initial-interval: 1000
+        multiplier: 1.5
+        max-interval: 3000

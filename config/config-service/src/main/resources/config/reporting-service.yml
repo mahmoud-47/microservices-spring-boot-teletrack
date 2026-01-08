@@ -1,0 +1,53 @@
+server:
+  port: 8084
+
+
+# Feign Client Configuration
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: basic
+      incident-service:  # Specific config for Incident Service
+        connectTimeout: 10000
+        readTimeout: 10000
+        loggerLevel: full
+  circuitbreaker:
+    enabled: true
+
+# Resilience4J for Feign calls
+resilience4j:
+  circuitbreaker:
+    instances:
+      incidentServiceClient:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10000
+        permitted-number-of-calls-in-half-open-state: 3
+  retry:
+    instances:
+      incidentServiceClient:
+        max-attempts: 3
+        wait-duration: 1000
+
+# Swagger/OpenAPI
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.teletrack.reporting: DEBUG
