@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 650">
+  <defs>
+    <style>
+      .state-closed { fill: #c8e6c9; stroke: #2e7d32; stroke-width: 3; }
+      .state-open { fill: #ffcdd2; stroke: #c62828; stroke-width: 3; }
+      .state-half { fill: #fff9c4; stroke: #f57f17; stroke-width: 3; }
+      .text { font-family: Arial, sans-serif; font-size: 13px; fill: #333; }
+      .title { font-family: Arial, sans-serif; font-size: 18px; font-weight: bold; fill: #333; }
+      .small { font-size: 11px; fill: #666; }
+      .arrow { stroke: #333; stroke-width: 2.5; fill: none; marker-end: url(#arrowhead); }
+      .arrow-success { stroke: #2e7d32; stroke-width: 2.5; fill: none; marker-end: url(#arrowhead-success); }
+      .arrow-fail { stroke: #c62828; stroke-width: 2.5; fill: none; marker-end: url(#arrowhead-fail); }
+    </style>
+    <marker id="arrowhead" markerWidth="12" markerHeight="12" refX="10" refY="3" orient="auto">
+      <polygon points="0 0, 12 3, 0 6" fill="#333" />
+    </marker>
+    <marker id="arrowhead-success" markerWidth="12" markerHeight="12" refX="10" refY="3" orient="auto">
+      <polygon points="0 0, 12 3, 0 6" fill="#2e7d32" />
+    </marker>
+    <marker id="arrowhead-fail" markerWidth="12" markerHeight="12" refX="10" refY="3" orient="auto">
+      <polygon points="0 0, 12 3, 0 6" fill="#c62828" />
+    </marker>
+  </defs>
+  
+  <!-- Title -->
+  <text x="450" y="30" text-anchor="middle" class="title">Circuit Breaker Pattern - State Machine</text>
+  
+  <!-- CLOSED State -->
+  <rect x="50" y="100" width="200" height="140" rx="10" class="state-closed"/>
+  <text x="150" y="135" text-anchor="middle" class="text" font-weight="bold" font-size="16">CLOSED</text>
+  <text x="150" y="158" text-anchor="middle" class="small">(Normal Operation)</text>
+  <text x="65" y="185" class="small">✓ Requests pass through</text>
+  <text x="65" y="202" class="small">✓ Track success/failure rate</text>
+  <text x="65" y="219" class="small">✓ Track slow call rate</text>
+  
+  <!-- OPEN State -->
+  <rect x="650" y="100" width="200" height="140" rx="10" class="state-open"/>
+  <text x="750" y="135" text-anchor="middle" class="text" font-weight="bold" font-size="16">OPEN</text>
+  <text x="750" y="158" text-anchor="middle" class="small">(Circuit Tripped)</text>
+  <text x="665" y="185" class="small">✗ Requests fail immediately</text>
+  <text x="665" y="202" class="small">✓ Return fallback response</text>
+  <text x="665" y="219" class="small">⏱ Wait 30 seconds</text>
+  
+  <!-- HALF_OPEN State -->
+  <rect x="350" y="350" width="200" height="140" rx="10" class="state-half"/>
+  <text x="450" y="385" text-anchor="middle" class="text" font-weight="bold" font-size="16">HALF_OPEN</text>
+  <text x="450" y="408" text-anchor="middle" class="small">(Testing Recovery)</text>
+  <text x="365" y="435" class="small">⚠ Allow 3 test requests</text>
+  <text x="365" y="452" class="small">✓ If all succeed → CLOSED</text>
+  <text x="365" y="469" class="small">✗ If any fail → OPEN</text>
+  
+  <!-- Transition: CLOSED → OPEN -->
+  <path d="M 250 170 L 650 170" class="arrow-fail"/>
+  <text x="450" y="160" text-anchor="middle" class="text" fill="#c62828" font-weight="bold">Failure Threshold Exceeded</text>
+  <text x="450" y="185" text-anchor="middle" class="small" fill="#c62828">≥50% failures OR ≥60% slow calls</text>
+  <text x="450" y="200" text-anchor="middle" class="small" fill="#c62828">(in sliding window of 10 requests)</text>
+  
+  <!-- Transition: OPEN → HALF_OPEN -->
+  <path d="M 750 240 L 500 350" class="arrow"/>
+  <text x="640" y="285" text-anchor="middle" class="text" font-weight="bold">Wait Duration Elapsed</text>
+  <text x="640" y="302" text-anchor="middle" class="small">After 30 seconds</text>
+  
+  <!-- Transition: HALF_OPEN → CLOSED (Success) -->
+  <path d="M 350 420 L 150 240" class="arrow-success"/>
+  <text x="220" y="320" text-anchor="middle" class="text" fill="#2e7d32" font-weight="bold">All Test Calls Succeed</text>
+  <text x="220" y="337" text-anchor="middle" class="small" fill="#2e7d32">3/3 requests successful</text>
+  
+  <!-- Transition: HALF_OPEN → OPEN (Failure) -->
+  <path d="M 550 420 L 750 240" class="arrow-fail"/>
+  <text x="680" y="320" text-anchor="middle" class="text" fill="#c62828" font-weight="bold">Test Call Fails</text>
+  <text x="680" y="337" text-anchor="middle" class="small" fill="#c62828">Any request fails</text>
+  
+  <!-- Configuration Table -->
+  <rect x="50" y="520" width="800" height="110" fill="#f5f5f5" stroke="#999" stroke-width="1" rx="5"/>
+  <text x="60" y="545" class="text" font-weight="bold" font-size="14">Resilience4J Configuration:</text>
+  
+  <text x="70" y="570" class="text" font-size="12">Parameter</text>
+  <text x="350" y="570" class="text" font-size="12">Value</text>
+  <text x="550" y="570" class="text" font-size="12">Description</text>
+  
+  <line x1="60" y1="575" x2="840" y2="575" stroke="#999" stroke-width="1"/>
+  
+  <text x="70" y="592" class="small">sliding-window-size</text>
+  <text x="350" y="592" class="small">10 requests</text>
+  <text x="550" y="592" class="small">Track last 10 requests</text>
+  
+  <text x="70" y="607" class="small">failure-rate-threshold</text>
+  <text x="350" y="607" class="small">50%</text>
+  <text x="550" y="607" class="small">Open if ≥50% fail</text>
+  
+  <text x="70" y="622" class="small">slow-call-rate-threshold</text>
+  <text x="350" y="622" class="small">60%</text>
+  <text x="550" y="622" class="small">Open if ≥60% are slow (>5s)</text>
+  
+  <line x1="60" y1="627" x2="840" y2="627" stroke="#999" stroke-width="1"/>
+  
+  <!-- Example Scenario -->
+  <rect x="50" y="650" width="800" height="0" fill="transparent"/>
+  
+  <!-- Legend -->
+  <text x="60" y="560" class="text" font-size="11" font-style="italic">Applied at: API Gateway for all service calls</text>
+</svg>

@@ -1,56 +1,83 @@
+server:
+  port: 8080
+
 spring:
   application:
     name: api-gateway
   cloud:
     gateway:
-      server:
-        webflux:
-          discovery:
-            locator:
-              enabled: true
-              lower-case-service-id: true
-          routes:
-            - id: user-service
-              uri: lb://user-service
-              predicates:
-                - Path=/api/v1/users/**
-              filters:
-                - RewritePath=/api/v1/users/(?<segment>.*), /${segment}
-                - name: CircuitBreaker
-                  args:
-                    name: userServiceCircuitBreaker
-                    fallbackUri: forward:/fallback/users
-            # Incident Service Routes
-            - id: incident-service
-              uri: lb://incident-service
-              predicates:
-                - Path=/api/v1/incidents/**
-              filters:
-                - RewritePath=/api/v1/incidents/(?<segment>.*), /${segment}
-                - name: CircuitBreaker
-                  args:
-                    name: incidentServiceCircuitBreaker
-                    fallbackUri: forward:/fallback/incidents
-            # Reporting Service Routes
-            - id: reporting-service
-              uri: lb://reporting-service
-              predicates:
-                - Path=/api/v1/reports/**
-              filters:
-                - RewritePath=/api/v1/reports/(?<segment>.*), /${segment}
-                - name: CircuitBreaker
-                  args:
-                    name: reportingServiceCircuitBreaker
-                    fallbackUri: forward:/fallback/reporting
-            # Notification Service Routes (for health checks)
-            - id: notification-service
-              uri: lb://notification-service
-              predicates:
-                - Path=/api/v1/notifications/**
-              filters:
-                - RewritePath=/api/v1/notifications/(?<segment>.*), /${segment}
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        # User Service - Auth Routes
+        - id: user-service-auth
+          uri: lb://user-service
+          predicates:
+            - Path=/api/v1/auth/**
+          filters:
+            - RewritePath=/api/v1/auth/(?<segment>.*), /auth/${segment}
+            - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
+            - name: CircuitBreaker
+              args:
+                name: userServiceCircuitBreaker
+                fallbackUri: forward:/fallback/users
 
+        # User Service - Users Routes
+        - id: user-service-users
+          uri: lb://user-service
+          predicates:
+            - Path=/api/v1/users/**
+          filters:
+            - RewritePath=/api/v1/users/(?<segment>.*), /users/${segment}
+            - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
+            - name: CircuitBreaker
+              args:
+                name: userServiceCircuitBreaker
+                fallbackUri: forward:/fallback/users
 
+        # Incident Service Routes
+        - id: incident-service
+          uri: lb://incident-service
+          predicates:
+            - Path=/api/v1/incidents/**
+          filters:
+            - RewritePath=/api/v1/incidents/(?<segment>.*), /incidents/${segment}
+            - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
+            - name: CircuitBreaker
+              args:
+                name: incidentServiceCircuitBreaker
+                fallbackUri: forward:/fallback/incidents
+
+        # Reporting Service Routes
+        - id: reporting-service
+          uri: lb://reporting-service
+          predicates:
+            - Path=/api/v1/reports/**
+          filters:
+            - RewritePath=/api/v1/reports/(?<segment>.*), /reports/${segment}
+            - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
+            - name: CircuitBreaker
+              args:
+                name: reportingServiceCircuitBreaker
+                fallbackUri: forward:/fallback/reporting
+
+        # Notification Service Routes (for health checks and manual access)
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/v1/notifications/**
+          filters:
+            - RewritePath=/api/v1/notifications/(?<segment>.*), /notifications/${segment}
+            - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
+
+# Gateway Service Key Configuration
+gateway:
+  service:
+    key: ${GATEWAY_SERVICE_KEY:sk_gateway_default_key_change_in_prod}
+
+# Eureka Client Configuration
 eureka:
   client:
     service-url:
@@ -68,33 +95,42 @@ resilience4j:
       userServiceCircuitBreaker:
         sliding-window-size: 10
         failure-rate-threshold: 50
-        wait-duration-in-open-state: 10000
+        wait-duration-in-open-state: 30s
         permitted-number-of-calls-in-half-open-state: 3
+        slow-call-duration-threshold: 5s
+        slow-call-rate-threshold: 60
+
       incidentServiceCircuitBreaker:
         sliding-window-size: 10
         failure-rate-threshold: 50
-        wait-duration-in-open-state: 10000
+        wait-duration-in-open-state: 30s
         permitted-number-of-calls-in-half-open-state: 3
+        slow-call-duration-threshold: 5s
+        slow-call-rate-threshold: 60
+
       reportingServiceCircuitBreaker:
         sliding-window-size: 10
         failure-rate-threshold: 50
-        wait-duration-in-open-state: 10000
+        wait-duration-in-open-state: 30s
         permitted-number-of-calls-in-half-open-state: 3
+        slow-call-duration-threshold: 5s
+        slow-call-rate-threshold: 60
 
+# Actuator Configuration
 management:
   endpoints:
     web:
       exposure:
         include: health,info,gateway,routes,metrics,prometheus
+  health:
+    show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
 
-    health:
-      show-details: always
-
-    metrics:
-      tags:
-        application: ${spring.application.name}
-
+# Logging Configuration
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG
     org.springframework.cloud.loadbalancer: DEBUG
+    com.teletrack360: DEBUG

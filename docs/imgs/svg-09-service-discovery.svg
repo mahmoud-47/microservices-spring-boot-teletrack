@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600">
+  <defs>
+    <style>
+      .eureka { fill: #fff3e0; stroke: #f57c00; stroke-width: 3; }
+      .service { fill: #e3f2fd; stroke: #1976d2; stroke-width: 2; }
+      .gateway { fill: #e8f5e9; stroke: #388e3c; stroke-width: 2; }
+      .text { font-family: Arial, sans-serif; font-size: 12px; fill: #333; }
+      .title { font-family: Arial, sans-serif; font-size: 18px; font-weight: bold; fill: #333; }
+      .small { font-size: 10px; fill: #666; }
+      .arrow { stroke: #333; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .arrow-register { stroke: #f57c00; stroke-width: 2; fill: none; marker-end: url(#arrowhead-register); stroke-dasharray: 5,5; }
+      .arrow-discover { stroke: #388e3c; stroke-width: 2; fill: none; marker-end: url(#arrowhead-discover); }
+      .step { fill: #fff; stroke: #666; stroke-width: 1; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#333" />
+    </marker>
+    <marker id="arrowhead-register" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#f57c00" />
+    </marker>
+    <marker id="arrowhead-discover" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#388e3c" />
+    </marker>
+  </defs>
+  
+  <!-- Title -->
+  <text x="450" y="30" text-anchor="middle" class="title">Service Discovery Flow - Eureka</text>
+  
+  <!-- Eureka Server (Center) -->
+  <rect x="325" y="120" width="250" height="180" rx="8" class="eureka"/>
+  <text x="450" y="155" text-anchor="middle" class="text" font-weight="bold" font-size="16">Eureka Discovery Server</text>
+  <text x="450" y="175" text-anchor="middle" class="small">Port: 8761</text>
+  <text x="450" y="192" text-anchor="middle" class="small">http://discovery:8761/eureka</text>
+  
+  <!-- Service Registry Table -->
+  <rect x="345" y="210" width="210" height="75" fill="#fff" stroke="#f57c00" stroke-width="1" rx="3"/>
+  <text x="450" y="228" text-anchor="middle" class="text" font-weight="bold">Service Registry</text>
+  <text x="355" y="245" class="small">Service Name | Instances | Status</text>
+  <line x1="350" y1="250" x2="550" y2="250" stroke="#999" stroke-width="1"/>
+  <text x="355" y="263" class="small">USER-SERVICE | 2 | UP</text>
+  <text x="355" y="275" class="small">INCIDENT-SERVICE | 1 | UP</text>
+  
+  <!-- Microservices (Bottom) -->
+  <rect x="50" y="380" width="130" height="70" rx="5" class="service"/>
+  <text x="115" y="405" text-anchor="middle" class="text" font-weight="bold">User Service</text>
+  <text x="115" y="422" text-anchor="middle" class="small">instance-1</text>
+  <text x="115" y="437" text-anchor="middle" class="small">192.168.1.10:8081</text>
+  
+  <rect x="210" y="380" width="130" height="70" rx="5" class="service"/>
+  <text x="275" y="405" text-anchor="middle" class="text" font-weight="bold">User Service</text>
+  <text x="275" y="422" text-anchor="middle" class="small">instance-2</text>
+  <text x="275" y="437" text-anchor="middle" class="small">192.168.1.11:8082</text>
+  
+  <rect x="370" y="380" width="130" height="70" rx="5" class="service"/>
+  <text x="435" y="405" text-anchor="middle" class="text" font-weight="bold">Incident Service</text>
+  <text x="435" y="422" text-anchor="middle" class="small">instance-1</text>
+  <text x="435" y="437" text-anchor="middle" class="small">192.168.1.20:8082</text>
+  
+  <rect x="530" y="380" width="130" height="70" rx="5" class="service"/>
+  <text x="595" y="405" text-anchor="middle" class="text" font-weight="bold">Notification</text>
+  <text x="595" y="420" text-anchor="middle" class="text" font-weight="bold">Service</text>
+  <text x="595" y="437" text-anchor="middle" class="small">192.168.1.30:8083</text>
+  
+  <rect x="690" y="380" width="130" height="70" rx="5" class="service"/>
+  <text x="755" y="405" text-anchor="middle" class="text" font-weight="bold">Reporting</text>
+  <text x="755" y="420" text-anchor="middle" class="text" font-weight="bold">Service</text>
+  <text x="755" y="437" text-anchor="middle" class="small">192.168.1.40:8084</text>
+  
+  <!-- API Gateway (Top) -->
+  <rect x="650" y="120" width="200" height="80" rx="5" class="gateway"/>
+  <text x="750" y="150" text-anchor="middle" class="text" font-weight="bold">API Gateway</text>
+  <text x="750" y="170" text-anchor="middle" class="small">Port: 8080</text>
+  <text x="750" y="187" text-anchor="middle" class="small" font-style="italic">Load Balancer</text>
+  
+  <!-- Registration Arrows (Services to Eureka) -->
+  <path d="M 115 380 L 380 300" class="arrow-register"/>
+  <circle cx="230" cy="340" r="12" class="step"/>
+  <text x="230" y="345" text-anchor="middle" class="text" font-size="10" font-weight="bold">1</text>
+  
+  <path d="M 275 380 L 400 300" class="arrow-register"/>
+  <path d="M 435 380 L 450 300" class="arrow-register"/>
+  <path d="M 595 380 L 490 300" class="arrow-register"/>
+  <path d="M 755 380 L 520 300" class="arrow-register"/>
+  
+  <text x="200" y="365" class="small" fill="#f57c00">Register on startup</text>
+  <text x="300" y="365" class="small" fill="#f57c00">Heartbeat every 30s</text>
+  
+  <!-- Discovery Arrow (Gateway queries Eureka) -->
+  <path d="M 650 160 L 575 200" class="arrow-discover"/>
+  <circle cx="610" cy="180" r="12" class="step"/>
+  <text x="610" y="185" text-anchor="middle" class="text" font-size="10" font-weight="bold">2</text>
+  <text x="610" y="210" class="small" fill="#388e3c">Query instances</text>
+  
+  <!-- Load Balancing Arrow (Gateway to Service) -->
+  <path d="M 700 200 L 275 380" class="arrow"/>
+  <circle cx="480" cy="290" r="12" class="step"/>
+  <text x="480" y="295" text-anchor="middle" class="text" font-size="10" font-weight="bold">3</text>
+  <text x="520" y="310" class="small">Load balance (round-robin)</text>
+  
+  <!-- Flow Steps Description -->
+  <rect x="50" y="480" width="800" height="100" fill="#f5f5f5" stroke="#999" stroke-width="1" rx="5"/>
+  <text x="60" y="505" class="text" font-weight="bold">Service Discovery Flow:</text>
+  
+  <circle cx="70" cy="525" r="12" class="step"/>
+  <text x="70" y="530" text-anchor="middle" class="text" font-size="10" font-weight="bold">1</text>
+  <text x="95" y="530" class="text" font-size="11">
+    <tspan font-weight="bold">Registration:</tspan> Services register with Eureka on startup
+  </text>
+  <text x="105" y="545" class="small">• Service name (e.g., "USER-SERVICE")</text>
+  <text x="105" y="558" class="small">• IP address, port, health check endpoint</text>
+  <text x="105" y="571" class="small">• Send heartbeat every 30s (3 missed = marked DOWN)</text>
+  
+  <circle cx="470" cy="525" r="12" class="step"/>
+  <text x="470" y="530" text-anchor="middle" class="text" font-size="10" font-weight="bold">2</text>
+  <text x="495" y="530" class="text" font-size="11">
+    <tspan font-weight="bold">Discovery:</tspan> Gateway queries Eureka for service locations
+  </text>
+  <text x="505" y="545" class="small">• Cache registry locally (refresh every 30s)</text>
+  <text x="505" y="558" class="small">• Filter to healthy instances (status = UP)</text>
+  
+  <circle cx="70" cy="560" r="12" class="step"/>
+  <text x="70" y="565" text-anchor="middle" class="text" font-size="10" font-weight="bold">3</text>
+  <text x="95" y="565" class="text" font-size="11">
+    <tspan font-weight="bold">Load Balancing:</tspan> Select instance using round-robin
+  </text>
+  
+  <!-- Configuration Example -->
+  <text x="50" y="615" class="text" font-weight="bold">Eureka Client Configuration (in each service):</text>
+  <text x="60" y="635" class="small" font-family="monospace">eureka.client.service-url.defaultZone=http://discovery:8761/eureka</text>
+  <text x="60" y="650" class="small" font-family="monospace">eureka.instance.prefer-ip-address=true</text>
+  <text x="60" y="665" class="small" font-family="monospace">eureka.instance.lease-renewal-interval-in-seconds=30</text>
+  <text x="60" y="680" class="small" font-family="monospace">eureka.instance.health-check-url-path=/actuator/health</text>
+</svg>
