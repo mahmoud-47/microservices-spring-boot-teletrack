@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700">
+  <defs>
+    <style>
+      .metrics { fill: #e3f2fd; stroke: #1976d2; stroke-width: 2; }
+      .logs { fill: #fff3e0; stroke: #f57c00; stroke-width: 2; }
+      .traces { fill: #f3e5f5; stroke: #7b1fa2; stroke-width: 2; }
+      .service { fill: #e8f5e9; stroke: #388e3c; stroke-width: 2; }
+      .text { font-family: Arial, sans-serif; font-size: 12px; fill: #333; }
+      .title { font-family: Arial, sans-serif; font-size: 18px; font-weight: bold; fill: #333; }
+      .small { font-size: 10px; fill: #666; }
+      .arrow { stroke: #666; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#666" />
+    </marker>
+  </defs>
+  
+  <!-- Title -->
+  <text x="500" y="30" text-anchor="middle" class="title">Observability Stack - Three Pillars</text>
+  
+  <!-- Microservices (Source) -->
+  <rect x="50" y="80" width="900" height="80" rx="5" class="service"/>
+  <text x="500" y="110" text-anchor="middle" class="text" font-weight="bold" font-size="14">Microservices Layer</text>
+  
+  <rect x="80" y="130" width="120" height="25" rx="3" fill="#fff" stroke="#388e3c"/>
+  <text x="140" y="147" text-anchor="middle" class="small">User Service</text>
+  
+  <rect x="220" y="130" width="120" height="25" rx="3" fill="#fff" stroke="#388e3c"/>
+  <text x="280" y="147" text-anchor="middle" class="small">Incident Service</text>
+  
+  <rect x="360" y="130" width="140" height="25" rx="3" fill="#fff" stroke="#388e3c"/>
+  <text x="430" y="147" text-anchor="middle" class="small">Notification Service</text>
+  
+  <rect x="520" y="130" width="130" height="25" rx="3" fill="#fff" stroke="#388e3c"/>
+  <text x="585" y="147" text-anchor="middle" class="small">Reporting Service</text>
+  
+  <rect x="670" y="130" width="120" height="25" rx="3" fill="#fff" stroke="#388e3c"/>
+  <text x="730" y="147" text-anchor="middle" class="small">API Gateway</text>
+  
+  <rect x="810" y="130" width="100" height="25" rx="3" fill="#fff" stroke="#388e3c"/>
+  <text x="860" y="147" text-anchor="middle" class="small">AI Service</text>
+  
+  <!-- Pillar 1: Metrics (Prometheus + Grafana) -->
+  <rect x="50" y="220" width="280" height="250" rx="5" class="metrics"/>
+  <text x="190" y="250" text-anchor="middle" class="text" font-weight="bold" font-size="15">Pillar 1: METRICS</text>
+  
+  <rect x="70" y="270" width="240" height="70" rx="3" fill="#fff" stroke="#1976d2"/>
+  <text x="190" y="290" text-anchor="middle" class="text" font-weight="bold">Prometheus</text>
+  <text x="80" y="310" class="small">• Scrapes /actuator/prometheus</text>
+  <text x="80" y="325" class="small">• Time-series database</text>
+  <text x="80" y="340" class="small">• 15-second intervals</text>
+  
+  <rect x="70" y="355" width="240" height="100" rx="3" fill="#fff" stroke="#1976d2"/>
+  <text x="190" y="375" text-anchor="middle" class="text" font-weight="bold">Grafana Dashboards</text>
+  <text x="80" y="395" class="small">Metrics Collected:</text>
+  <text x="90" y="410" class="small">• HTTP request rate/latency (p50/p95/p99)</text>
+  <text x="90" y="425" class="small">• Error rate per endpoint</text>
+  <text x="90" y="440" class="small">• JVM memory, GC, threads</text>
+  <text x="90" y="455" class="small">• Database connection pool</text>
+  
+  <!-- Pillar 2: Logs (ELK Stack) -->
+  <rect x="360" y="220" width="280" height="250" rx="5" class="logs"/>
+  <text x="500" y="250" text-anchor="middle" class="text" font-weight="bold" font-size="15">Pillar 2: LOGS</text>
+  
+  <rect x="380" y="270" width="240" height="50" rx="3" fill="#fff" stroke="#f57c00"/>
+  <text x="500" y="295" text-anchor="middle" class="text" font-weight="bold">Logstash</text>
+  <text x="390" y="312" class="small">Collection + Parsing</text>
+  
+  <rect x="380" y="335" width="240" height="50" rx="3" fill="#fff" stroke="#f57c00"/>
+  <text x="500" y="360" text-anchor="middle" class="text" font-weight="bold">Elasticsearch</text>
+  <text x="390" y="377" class="small">Indexing + Search</text>
+  
+  <rect x="380" y="400" width="240" height="55" rx="3" fill="#fff" stroke="#f57c00"/>
+  <text x="500" y="420" text-anchor="middle" class="text" font-weight="bold">Kibana</text>
+  <text x="390" y="437" class="small">• Error dashboards</text>
+  <text x="390" y="450" class="small">• Log search by correlation ID</text>
+  
+  <!-- Pillar 3: Traces (OpenTelemetry + Jaeger) -->
+  <rect x="670" y="220" width="280" height="250" rx="5" class="traces"/>
+  <text x="810" y="250" text-anchor="middle" class="text" font-weight="bold" font-size="15">Pillar 3: TRACES</text>
+  
+  <rect x="690" y="270" width="240" height="60" rx="3" fill="#fff" stroke="#7b1fa2"/>
+  <text x="810" y="290" text-anchor="middle" class="text" font-weight="bold">OpenTelemetry</text>
+  <text x="700" y="310" class="small">• Trace context propagation</text>
+  <text x="700" y="325" class="small">• Span creation</text>
+  
+  <rect x="690" y="345" width="240" height="110" rx="3" fill="#fff" stroke="#7b1fa2"/>
+  <text x="810" y="365" text-anchor="middle" class="text" font-weight="bold">Jaeger UI</text>
+  <text x="700" y="385" class="small">Distributed Tracing:</text>
+  <text x="710" y="400" class="small">• View complete request flow</text>
+  <text x="710" y="415" class="small">• Identify bottlenecks</text>
+  <text x="710" y="430" class="small">• Analyze error traces</text>
+  <text x="710" y="445" class="small">• Search by trace/correlation ID</text>
+  
+  <!-- Arrows from Services -->
+  <path d="M 140 160 L 140 220" class="arrow" stroke="#1976d2"/>
+  <path d="M 280 160 L 280 220" class="arrow" stroke="#1976d2"/>
+  
+  <path d="M 430 160 L 430 220" class="arrow" stroke="#f57c00"/>
+  <path d="M 585 160 L 585 220" class="arrow" stroke="#f57c00"/>
+  
+  <path d="M 730 160 L 730 220" class="arrow" stroke="#7b1fa2"/>
+  <path d="M 860 160 L 860 220" class="arrow" stroke="#7b1fa2"/>
+  
+  <!-- Example Data -->
+  <rect x="50" y="500" width="900" height="180" fill="#f5f5f5" stroke="#999" stroke-width="1" rx="5"/>
+  <text x="60" y="525" class="text" font-weight="bold" font-size="14">Example: Create Incident Request</text>
+  
+  <!-- Metrics Example -->
+  <rect x="70" y="540" width="260" height="120" fill="#e3f2fd" stroke="#1976d2" stroke-width="1" rx="3"/>
+  <text x="80" y="560" class="text" font-weight="bold">Metrics Captured:</text>
+  <text x="85" y="578" class="small">http_requests_total{</text>
+  <text x="95" y="593" class="small">method=POST,</text>
+  <text x="95" y="608" class="small">endpoint=/incidents,</text>
+  <text x="95" y="623" class="small">status=201</text>
+  <text x="85" y="638" class="small">} → count: 1, duration: 0.25s</text>
+  
+  <!-- Logs Example -->
+  <rect x="360" y="540" width="260" height="120" fill="#fff3e0" stroke="#f57c00" stroke-width="1" rx="3"/>
+  <text x="370" y="560" class="text" font-weight="bold">Structured Log:</text>
+  <text x="375" y="578" class="small">{</text>
+  <text x="385" y="593" class="small">"timestamp": "2026-01-09...",</text>
+  <text x="385" y="608" class="small">"correlationId": "abc-123",</text>
+  <text x="385" y="623" class="small">"action": "CREATE_INCIDENT",</text>
+  <text x="385" y="638" class="small">"userId": "uuid", "status": "success"</text>
+  <text x="375" y="653" class="small">}</text>
+  
+  <!-- Trace Example -->
+  <rect x="650" y="540" width="280" height="120" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="1" rx="3"/>
+  <text x="660" y="560" class="text" font-weight="bold">Trace Spans:</text>
+  <text x="665" y="578" class="small">Trace ID: abc-123-def-456</text>
+  <text x="670" y="595" class="small">├─ Gateway routing [50ms]</text>
+  <text x="670" y="610" class="small">├─ Incident Service [200ms]</text>
+  <text x="675" y="625" class="small">├── DB Insert [80ms]</text>
+  <text x="675" y="640" class="small">└── Kafka Publish [40ms]</text>
+  <text x="665" y="655" class="small">Total: 250ms</text>
+  
+  <!-- Correlation -->
+  <text x="500" y="695" text-anchor="middle" class="text" font-weight="bold">Correlation: All three linked by X-Correlation-ID header</text>
+</svg>
