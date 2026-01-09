@@ -78,6 +78,10 @@ src/main/java/com/teletrack360/shared/
 - When common-utils changes, increment version and rebuild dependent services
 
 ---
+## ERD
+
+![teletrack erd.drawio.png](imgs%2Fteletrack%20erd.drawio.png)
+---
 
 ## 2. User Service - Component Design
 
