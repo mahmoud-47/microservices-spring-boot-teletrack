@@ -30,7 +30,7 @@ public class User {
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
-    @Column(name = "password_hash", nullable = false)
+    @Column(name = "password_hash") // needs to be nullable for oauth guys
     private String passwordHash;
 
     @Column(name = "first_name", nullable = false, length = 50)
