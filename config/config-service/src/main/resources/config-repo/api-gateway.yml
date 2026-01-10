@@ -21,6 +21,7 @@ spring:
               uri: lb://user-service
               predicates:
                 - Path=/oauth2/**
+                - Method=GET,POST,PUT,DELETE,PATCH,OPTIONS
               filters:
                 - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
 
@@ -28,6 +29,7 @@ spring:
               uri: lb://user-service
               predicates:
                 - Path=/login/oauth2/**
+                - Method=GET,POST,PUT,DELETE,PATCH,OPTIONS
               filters:
                 - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
 
@@ -40,6 +42,7 @@ spring:
               uri: lb://user-service
               predicates:
                 - Path=/api/v1/auth/**
+                - Method=GET,POST,PUT,DELETE,PATCH,OPTIONS
               filters:
                 - RewritePath=/api/v1/auth/(?<segment>.*), /auth/${segment}
                 - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
@@ -53,6 +56,7 @@ spring:
               uri: lb://user-service
               predicates:
                 - Path=/api/v1/users/**
+                - Method=GET,POST,PUT,DELETE,PATCH,OPTIONS
               filters:
                 - RewritePath=/api/v1/users/(?<segment>.*), /users/${segment}
                 - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
@@ -66,6 +70,7 @@ spring:
               uri: lb://user-service
               predicates:
                 - Path=/user-service/v3/api-docs/**
+                - Method=GET,POST,PUT,DELETE,PATCH,OPTIONS
               filters:
                 - RewritePath=/user-service/v3/api-docs, /v3/api-docs
 
@@ -78,6 +83,7 @@ spring:
               uri: lb://incident-service
               predicates:
                 - Path=/api/v1/incidents/**
+                - Method=GET,POST,PUT,DELETE,PATCH,OPTIONS
               filters:
                 - RewritePath=/api/v1/incidents/(?<segment>.*), /incidents/${segment}
                 - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}

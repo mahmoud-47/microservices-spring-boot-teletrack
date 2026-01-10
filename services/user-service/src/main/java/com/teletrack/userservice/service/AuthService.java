@@ -251,6 +251,7 @@ public class AuthService {
         return AuthResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
+                .tokenType("Bearer")
                 .user(userMapper.mapToUserResponse(user))
                 .build();
     }

@@ -1,6 +1,7 @@
 package com.teletrack.userservice.scheduler;
 
 import com.teletrack.userservice.repository.EmailVerificationTokenRepository;
+import com.teletrack.userservice.repository.OAuthStateRepository;
 import com.teletrack.userservice.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,7 @@ public class TokenCleanupScheduler {
 
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final OAuthStateRepository oAuthStateRepository;
 
     // Run every day at 2 AM
     @Scheduled(cron = "0 0 2 * * *")
@@ -34,6 +36,9 @@ public class TokenCleanupScheduler {
 
             refreshTokenRepository.deleteByExpiresAtBefore(now);
             log.info("Cleaned up expired refresh tokens");
+
+            oAuthStateRepository.deleteByExpiresAtBefore(now);
+            log.info("Cleaned up expired OAuth tokens");
 
             log.info("Token cleanup job completed successfully");
         } catch (Exception e) {

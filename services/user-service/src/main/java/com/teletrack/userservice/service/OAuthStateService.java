@@ -5,7 +5,6 @@ import com.teletrack.userservice.entity.UserRole;
 import com.teletrack.userservice.repository.OAuthStateRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,13 +64,4 @@ public class OAuthStateService {
         return state.getRole();
     }
 
-    /**
-     * Cleanup expired tokens daily
-     */
-    @Scheduled(cron = "0 0 2 * * ?") // Run at 2 AM daily
-    @Transactional
-    public void cleanupExpiredStates() {
-        oAuthStateRepository.deleteByExpiresAtBefore(LocalDateTime.now());
-        log.info("Cleaned up expired OAuth state tokens");
-    }
 }
