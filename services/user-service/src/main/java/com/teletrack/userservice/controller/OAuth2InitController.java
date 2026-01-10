@@ -6,6 +6,7 @@ import com.teletrack.userservice.service.OAuthStateService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +21,9 @@ import java.util.List;
 public class OAuth2InitController {
 
     private final OAuthStateService oAuthStateService;
+
+    @Value("${app.gateway.url}")
+    private String gatewayUrl;
 
     @GetMapping("/google")
     public ResponseEntity<?> initiateGoogleOAuth(
@@ -36,11 +40,7 @@ public class OAuth2InitController {
                 throw new IllegalArgumentException("Role not allowed for OAuth");
             }
         } catch (IllegalArgumentException e) {
-            System.out.println("******* Role not correct");
-//            response.sendError(
-//                    HttpServletResponse.SC_BAD_REQUEST,
-//                    "Invalid role. Must be one of: OPERATOR, SUPPORT, ADMIN"
-//            );
+
             return new ResponseEntity<>(ApiResponse.builder()
                     .success(false)
                     .message("Role not correct")
@@ -50,10 +50,9 @@ public class OAuth2InitController {
 
         // Create state token with role
         String stateToken = oAuthStateService.createState(userRole);
-        System.out.println("******* Set token = " + stateToken);
 
         // Redirect to Spring Security OAuth with state parameter
-        String redirectUrl = "http://localhost:8080/oauth2/authorization/google?roletoken=" + stateToken;
+        String redirectUrl = gatewayUrl + "/oauth2/authorization/google?roletoken=" + stateToken;
         response.sendRedirect(redirectUrl);
 
         return ResponseEntity.ok("OK");
