@@ -4,6 +4,15 @@ server:
 spring:
   application:
     name: notification-service
+  datasource:
+    url: ${NOTIFICATION_DB_URL:jdbc:postgresql://localhost:5433/notification_db}
+    username: ${NOTIFICATION_DB_USERNAME:postgres}
+    password: ${NOTIFICATION_DB_PASSWORD:postgres}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
 
 eureka:
   client:

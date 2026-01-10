@@ -13,7 +13,6 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "users", indexes = {
-        @Index(name = "idx_users_username", columnList = "username"),
         @Index(name = "idx_users_email", columnList = "email"),
         @Index(name = "idx_users_role", columnList = "role"),
         @Index(name = "idx_users_is_active", columnList = "is_active, is_approved")
@@ -27,9 +26,6 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-
-    @Column(nullable = false, unique = true, length = 50)
-    private String username;
 
     @Column(nullable = false, unique = true, length = 100)
     private String email;

@@ -1,0 +1,11 @@
+jwt:
+  secret: ${JWT_SECRET:207c11ed092814462f1c6f5713f747770183a6513f8558cfbcbff824a2ba0820}
+  access-token:
+    expiration: 3600000
+  refresh-token:
+    expiration: 2592000000
+
+app:
+  frontend:
+    url: http://localhost:3000
+

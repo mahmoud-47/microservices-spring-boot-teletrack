@@ -20,21 +20,14 @@
 		<!-- Spring Cloud Gateway -->
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
-			<artifactId>spring-cloud-gateway-server-webflux</artifactId>
+			<artifactId>spring-cloud-starter-gateway-server-webflux</artifactId>
 		</dependency>
 
+		<!-- SpringDoc OpenAPI for WebFlux -->
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-webflux</artifactId>
-		</dependency>
-
-
-
-		<!-- Test Dependencies -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+			<version>2.2.0</version>
 		</dependency>
 
 		<!-- Eureka Client -->
@@ -61,20 +54,24 @@
 			<artifactId>spring-cloud-starter-circuitbreaker-reactor-resilience4j</artifactId>
 		</dependency>
 
-
 		<!-- Actuator -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
 
-		<!-- Micrometer + Prometheus-->
+		<!-- Micrometer + Prometheus -->
 		<dependency>
 			<groupId>io.micrometer</groupId>
 			<artifactId>micrometer-registry-prometheus</artifactId>
 		</dependency>
 
-
+		<!-- Test Dependencies -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
