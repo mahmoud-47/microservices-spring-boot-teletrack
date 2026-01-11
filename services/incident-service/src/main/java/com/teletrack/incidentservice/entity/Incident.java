@@ -1,5 +1,7 @@
 package com.teletrack.incidentservice.entity;
 
+import com.teletrack.commonutils.enums.IncidentPriority;
+import com.teletrack.commonutils.enums.IncidentStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

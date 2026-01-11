@@ -1,4 +1,4 @@
-package com.teletrack.incidentservice.entity;
+package com.teletrack.commonutils.enums;
 
 public enum IncidentPriority {
     LOW,
