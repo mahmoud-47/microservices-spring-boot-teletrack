@@ -1,5 +1,6 @@
 package com.teletrack.userservice.exception;
 
+import com.teletrack.commonutils.exception.BadRequestException;
 import com.teletrack.commonutils.exception.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -92,6 +93,22 @@ public class GlobalExceptionHandler {
         response.put("path", request.getDescription(false).replace("uri=", ""));
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<?> handleBadRequestException(
+            BadRequestException ex,
+            WebRequest request) {
+
+        log.warn("Bad request: {}", ex.getMessage());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("message", ex.getMessage());
+        response.put("timestamp", LocalDateTime.now());
+        response.put("path", request.getDescription(false).replace("uri=", ""));
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
 //    @ExceptionHandler(DuplicateResourceException.class)
