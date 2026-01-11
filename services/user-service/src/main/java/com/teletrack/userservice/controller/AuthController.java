@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -67,6 +68,7 @@ public class AuthController {
             summary = "Get the current authenticated user",
             security = @SecurityRequirement(name = "bearerAuth")
     )
+    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'SUPPORT')")
     public ResponseEntity<UserResponse> getCurrentUser() {
         return ResponseEntity.ok(authService.getCurrentUser());
     }

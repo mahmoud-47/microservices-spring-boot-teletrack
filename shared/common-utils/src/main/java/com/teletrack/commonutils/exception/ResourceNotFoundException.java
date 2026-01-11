@@ -1,4 +1,4 @@
-package com.teletrack.commonutils.dto.exception;
+package com.teletrack.commonutils.exception;
 
 public class ResourceNotFoundException extends RuntimeException {
     public ResourceNotFoundException(String message) {

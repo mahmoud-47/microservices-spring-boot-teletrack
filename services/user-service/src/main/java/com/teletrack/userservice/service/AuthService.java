@@ -1,8 +1,7 @@
 package com.teletrack.userservice.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.teletrack.commonutils.dto.exception.BadRequestException;
-import com.teletrack.commonutils.dto.exception.ResourceNotFoundException;
+import com.teletrack.commonutils.exception.BadRequestException;
+import com.teletrack.commonutils.exception.ResourceNotFoundException;
 import com.teletrack.commonutils.dto.request.EmailVerificationRequest;
 import com.teletrack.commonutils.dto.request.LoginRequest;
 import com.teletrack.commonutils.dto.request.RefreshTokenRequest;
@@ -10,6 +9,8 @@ import com.teletrack.commonutils.dto.request.RegisterRequest;
 import com.teletrack.commonutils.dto.response.ApiResponse;
 import com.teletrack.commonutils.dto.response.AuthResponse;
 import com.teletrack.commonutils.dto.response.UserResponse;
+import com.teletrack.commonutils.event.EmailVerificationEvent;
+import com.teletrack.commonutils.event.UserRegisteredEvent;
 import com.teletrack.userservice.entity.EmailVerificationToken;
 import com.teletrack.userservice.entity.RefreshToken;
 import com.teletrack.userservice.entity.User;
@@ -21,6 +22,7 @@ import com.teletrack.userservice.repository.UserRepository;
 import com.teletrack.userservice.security.CustomUserDetails;
 import com.teletrack.userservice.security.JwtService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -44,7 +46,10 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final UserMapper userMapper;
-    private final ObjectMapper objectMapper;
+    private final EventPublisher eventPublisher;
+
+    @Value("${app.base-url:http://localhost:8080}")
+    private String baseUrl;
 
     @Transactional
     public ApiResponse register(RegisterRequest request) {
@@ -73,8 +78,38 @@ public class AuthService {
                 .build();
         emailVerificationTokenRepository.save(emailToken);
 
-        // TODO create account created event
-//        emailService.sendVerificationEmail(user.getEmail(), verificationToken);
+        // Publish user registered event
+        UserRegisteredEvent registeredEvent = UserRegisteredEvent.builder()
+                .eventId(UUID.randomUUID().toString())
+                .eventType("USER_REGISTERED")
+                .timestamp(LocalDateTime.now())
+                .correlationId(UUID.randomUUID().toString())
+                .userId(user.getId().toString())
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .role(user.getRole().name())
+                .verificationToken(verificationToken)
+                .build();
+
+        eventPublisher.publishEvent("user.registered", registeredEvent);
+
+        // Publish email verification event
+        String verificationLink = baseUrl + "/api/v1/auth/email/confirm?token=" + verificationToken;
+
+        EmailVerificationEvent verificationEvent = EmailVerificationEvent.builder()
+                .eventId(UUID.randomUUID().toString())
+                .eventType("EMAIL_VERIFICATION")
+                .timestamp(LocalDateTime.now())
+                .correlationId(UUID.randomUUID().toString())
+                .userId(user.getId().toString())
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .verificationToken(verificationToken)
+                .verificationLink(verificationLink)
+                .build();
+
+        eventPublisher.publishEvent("email.verification", verificationEvent);
 
         return ApiResponse.builder()
                 .success(true)
@@ -83,7 +118,7 @@ public class AuthService {
     }
 
     @Transactional
-    public Object login(LoginRequest request) {
+    public AuthResponse login(LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail().toLowerCase(),
@@ -101,7 +136,6 @@ public class AuthService {
         if (!user.getApproved()) {
             throw new BadRequestException("Your account has not been approved. Please contact admin.");
         }
-
 
         return generateAuthResponse(user, userDetails);
     }
@@ -141,14 +175,15 @@ public class AuthService {
             throw new BadRequestException("Email already verified");
         }
 
-        Optional<EmailVerificationToken> verif = emailVerificationTokenRepository
+        Optional<EmailVerificationToken> existingToken = emailVerificationTokenRepository
                 .findByUserAndUsedIsFalseAndExpiresAtAfter(user, LocalDateTime.now());
 
-        if (verif.isPresent()) {
-            // TODO send verif email event
-//            emailService.sendVerificationEmail(user.getEmail(), verif.get().getToken());
+        String verificationToken;
+
+        if (existingToken.isPresent()) {
+            verificationToken = existingToken.get().getToken();
         } else {
-            String verificationToken = UUID.randomUUID().toString();
+            verificationToken = UUID.randomUUID().toString();
             EmailVerificationToken emailToken = EmailVerificationToken.builder()
                     .user(user)
                     .token(verificationToken)
@@ -156,9 +191,24 @@ public class AuthService {
                     .used(false)
                     .build();
             emailVerificationTokenRepository.save(emailToken);
-            // TODO send verif email event
-//            emailService.sendVerificationEmail(user.getEmail(), verificationToken);
         }
+
+        // Publish email verification event
+        String verificationLink = baseUrl + "/api/v1/auth/email/confirm?token=" + verificationToken;
+
+        EmailVerificationEvent event = EmailVerificationEvent.builder()
+                .eventId(UUID.randomUUID().toString())
+                .eventType("EMAIL_VERIFICATION")
+                .timestamp(LocalDateTime.now())
+                .correlationId(UUID.randomUUID().toString())
+                .userId(user.getId().toString())
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .verificationToken(verificationToken)
+                .verificationLink(verificationLink)
+                .build();
+
+        eventPublisher.publishEvent("email.verification", event);
 
         return ApiResponse.builder()
                 .success(true)
@@ -212,13 +262,13 @@ public class AuthService {
         return AuthResponse.builder()
                 .accessToken(newAccessToken)
                 .refreshToken(newRefreshToken)
-                .user(userMapper.mapToUserResponse(user))
+                .user(userMapper.toUserResponse(user))
                 .build();
     }
 
     public UserResponse getCurrentUser() {
         User user = getCurrentAuthenticatedUser();
-        return userMapper.mapToUserResponse(user);
+        return userMapper.toUserResponse(user);
     }
 
     // Helper methods
@@ -252,7 +302,7 @@ public class AuthService {
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .tokenType("Bearer")
-                .user(userMapper.mapToUserResponse(user))
+                .user(userMapper.toUserResponse(user))
                 .build();
     }
 }

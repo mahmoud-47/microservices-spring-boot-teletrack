@@ -1,4 +1,4 @@
-package com.teletrack.commonutils.dto.exception;
+package com.teletrack.commonutils.exception;
 
 public class BadRequestException extends RuntimeException {
     public BadRequestException(String message) {

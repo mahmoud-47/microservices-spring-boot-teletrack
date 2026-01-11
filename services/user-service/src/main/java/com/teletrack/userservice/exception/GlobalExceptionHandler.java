@@ -1,7 +1,6 @@
 package com.teletrack.userservice.exception;
 
-import com.teletrack.commonutils.dto.exception.ResourceNotFoundException;
-import com.teletrack.commonutils.dto.response.ApiResponse;
+import com.teletrack.commonutils.exception.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

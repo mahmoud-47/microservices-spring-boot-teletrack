@@ -25,16 +25,35 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<!-- Jackson for JSON -->
+		<!-- Jackson for JSON (needed for Kafka events) -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-annotations</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
 		</dependency>
 
 		<!-- Validation API -->
 		<dependency>
 			<groupId>jakarta.validation</groupId>
 			<artifactId>jakarta.validation-api</artifactId>
+		</dependency>
+
+		<!-- Spring Cloud OpenFeign (OPTIONAL - only for Feign client) -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-openfeign</artifactId>
+			<optional>true</optional>
+		</dependency>
+
+		<!-- Spring Web (OPTIONAL - for @GetMapping, @PathVariable annotations) -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-web</artifactId>
+			<optional>true</optional>
 		</dependency>
 	</dependencies>
 

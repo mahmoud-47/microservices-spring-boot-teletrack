@@ -1,4 +1,4 @@
-package com.teletrack.userservice.utils;
+package com.teletrack.userservice.util;
 
 import com.teletrack.commonutils.dto.response.UserResponse;
 import com.teletrack.userservice.entity.User;

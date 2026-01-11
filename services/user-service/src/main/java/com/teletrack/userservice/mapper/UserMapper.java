@@ -8,6 +8,10 @@ import org.springframework.stereotype.Component;
 public class UserMapper {
 
     public UserResponse mapToUserResponse(User user) {
+        if(user == null){
+            return null;
+        }
+
         return UserResponse.builder()
                 .id(user.getId().toString())
                 .firstName(user.getFirstName())
@@ -17,5 +21,9 @@ public class UserMapper {
                 .isActive(user.getActive())
                 .isApproved(user.getApproved())
                 .build();
+    }
+
+    public UserResponse toUserResponse(User user) {
+        return mapToUserResponse(user);
     }
 }

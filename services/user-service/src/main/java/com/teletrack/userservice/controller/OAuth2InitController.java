@@ -22,7 +22,7 @@ public class OAuth2InitController {
 
     private final OAuthStateService oAuthStateService;
 
-    @Value("${app.gateway.url}")
+    @Value("${app.base-url}")
     private String gatewayUrl;
 
     @GetMapping("/google")
