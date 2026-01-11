@@ -8,6 +8,9 @@ import com.teletrack.commonutils.dto.response.IncidentResponse;
 import com.teletrack.commonutils.dto.response.PageResponse;
 import com.teletrack.commonutils.enums.IncidentStatus;
 import com.teletrack.incidentservice.service.IncidentService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -26,12 +29,18 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/incidents")
 @RequiredArgsConstructor
+@Tag(name = "Incident Management", description = "APIs for managing telecom incidents throughout their lifecycle")
 public class IncidentController {
 
     private final IncidentService incidentService;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('OPERATOR', 'SUPPORT', 'ADMIN')")
+    @Operation(
+            summary = "Create a new incident",
+            description = "Create a new incident report. Available to OPERATOR, SUPPORT, and ADMIN roles.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
     public ResponseEntity<ApiResponse> createIncident(
             @Valid @RequestBody CreateIncidentRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -49,6 +58,11 @@ public class IncidentController {
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
+    @Operation(
+            summary = "Get incident by ID",
+            description = "Retrieve detailed information about a specific incident including its history",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
     public ResponseEntity<ApiResponse> getIncidentById(@PathVariable UUID id) {
         IncidentResponse incident = incidentService.getIncidentById(id);
 
@@ -59,8 +73,13 @@ public class IncidentController {
                 .build());
     }
 
-    @GetMapping
+    @GetMapping("/list")
     @PreAuthorize("hasAnyRole('SUPPORT', 'ADMIN')")
+    @Operation(
+            summary = "Get all incidents",
+            description = "Retrieve paginated list of all incidents. Available to SUPPORT and ADMIN roles only.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
     public ResponseEntity<ApiResponse> getAllIncidents(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -73,7 +92,7 @@ public class IncidentController {
 
         Page<IncidentResponse> incidents = incidentService.getAllIncidents(pageable);
 
-        PageResponse<IncidentResponse> pagedResponse = PageResponse.<IncidentResponse>builder()
+        PageResponse<IncidentResponse> pageResponse = PageResponse.<IncidentResponse>builder()
                 .content(incidents.getContent())
                 .page(incidents.getNumber())
                 .size(incidents.getSize())
@@ -87,12 +106,17 @@ public class IncidentController {
         return ResponseEntity.ok(ApiResponse.builder()
                 .success(true)
                 .message("Incidents retrieved successfully")
-                .data(pagedResponse)
+                .data(pageResponse)
                 .build());
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('OPERATOR', 'SUPPORT', 'ADMIN')")
+    @Operation(
+            summary = "Update incident",
+            description = "Update incident details such as title, description, priority, or status",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
     public ResponseEntity<ApiResponse> updateIncident(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateIncidentRequest request,
@@ -110,6 +134,11 @@ public class IncidentController {
 
     @PostMapping("/{id}/assign")
     @PreAuthorize("hasAnyRole('SUPPORT', 'ADMIN')")
+    @Operation(
+            summary = "Assign incident to user",
+            description = "Assign an incident to a support user for resolution. Available to SUPPORT and ADMIN roles.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
     public ResponseEntity<ApiResponse> assignIncident(
             @PathVariable UUID id,
             @Valid @RequestBody AssignIncidentRequest request,
@@ -127,6 +156,11 @@ public class IncidentController {
 
     @PutMapping("/{id}/status")
     @PreAuthorize("hasAnyRole('SUPPORT', 'ADMIN')")
+    @Operation(
+            summary = "Change incident status",
+            description = "Update incident status (OPEN, IN_PROGRESS, RESOLVED, CLOSED). Available to SUPPORT and ADMIN roles.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
     public ResponseEntity<ApiResponse> changeStatus(
             @PathVariable UUID id,
             @RequestParam IncidentStatus status,
@@ -144,6 +178,11 @@ public class IncidentController {
 
     @GetMapping("/my")
     @PreAuthorize("isAuthenticated()")
+    @Operation(
+            summary = "Get my incidents",
+            description = "Retrieve all incidents reported by the current user",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
     public ResponseEntity<ApiResponse> getMyIncidents(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -154,7 +193,7 @@ public class IncidentController {
 
         Page<IncidentResponse> incidents = incidentService.getIncidentsByReportedBy(userId, pageable);
 
-        PageResponse<IncidentResponse> pagedResponse = PageResponse.<IncidentResponse>builder()
+        PageResponse<IncidentResponse> pageResponse = PageResponse.<IncidentResponse>builder()
                 .content(incidents.getContent())
                 .page(incidents.getNumber())
                 .size(incidents.getSize())
@@ -168,12 +207,17 @@ public class IncidentController {
         return ResponseEntity.ok(ApiResponse.builder()
                 .success(true)
                 .message("My incidents retrieved successfully")
-                .data(pagedResponse)
+                .data(pageResponse)
                 .build());
     }
 
     @GetMapping("/assigned")
     @PreAuthorize("hasAnyRole('SUPPORT', 'ADMIN')")
+    @Operation(
+            summary = "Get assigned incidents",
+            description = "Retrieve all incidents assigned to the current user. Available to SUPPORT and ADMIN roles.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
     public ResponseEntity<ApiResponse> getAssignedIncidents(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -184,7 +228,7 @@ public class IncidentController {
 
         Page<IncidentResponse> incidents = incidentService.getIncidentsByAssignedTo(userId, pageable);
 
-        PageResponse<IncidentResponse> pagedResponse = PageResponse.<IncidentResponse>builder()
+        PageResponse<IncidentResponse> pageResponse = PageResponse.<IncidentResponse>builder()
                 .content(incidents.getContent())
                 .page(incidents.getNumber())
                 .size(incidents.getSize())
@@ -198,12 +242,17 @@ public class IncidentController {
         return ResponseEntity.ok(ApiResponse.builder()
                 .success(true)
                 .message("Assigned incidents retrieved successfully")
-                .data(pagedResponse)
+                .data(pageResponse)
                 .build());
     }
 
     @GetMapping("/status/{status}")
     @PreAuthorize("hasAnyRole('SUPPORT', 'ADMIN')")
+    @Operation(
+            summary = "Get incidents by status",
+            description = "Filter incidents by status (OPEN, IN_PROGRESS, RESOLVED, CLOSED). Available to SUPPORT and ADMIN roles.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
     public ResponseEntity<ApiResponse> getIncidentsByStatus(
             @PathVariable IncidentStatus status,
             @RequestParam(defaultValue = "0") int page,
@@ -212,7 +261,7 @@ public class IncidentController {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<IncidentResponse> incidents = incidentService.getIncidentsByStatus(status, pageable);
 
-        PageResponse<IncidentResponse> pagedResponse = PageResponse.<IncidentResponse>builder()
+        PageResponse<IncidentResponse> pageResponse = PageResponse.<IncidentResponse>builder()
                 .content(incidents.getContent())
                 .page(incidents.getNumber())
                 .size(incidents.getSize())
@@ -226,7 +275,7 @@ public class IncidentController {
         return ResponseEntity.ok(ApiResponse.builder()
                 .success(true)
                 .message("Incidents retrieved successfully")
-                .data(pagedResponse)
+                .data(pageResponse)
                 .build());
     }
 

@@ -89,9 +89,9 @@ spring:
         - id: incident-service
           uri: lb://incident-service
           predicates:
-            - Path=/api/v1/incidents/**
+          - Path=/api/v1/incidents,/api/v1/incidents/**
           filters:
-            - RewritePath=/api/v1/incidents/(?<segment>.*), /incidents/${segment}
+            - StripPrefix=2
             - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
             - name: CircuitBreaker
               args:
@@ -207,6 +207,9 @@ springdoc:
     urls:
       - name: User Service
         url: /user-service/v3/api-docs
+      - name: Incident Service
+        url: /incident-service/v3/api-docs
+
     tags-sorter: alpha
     operations-sorter: alpha
 
