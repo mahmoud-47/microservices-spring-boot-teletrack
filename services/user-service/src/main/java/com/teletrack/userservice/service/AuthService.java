@@ -162,7 +162,7 @@ public class AuthService {
 
         return ApiResponse.builder()
                 .success(true)
-                .message("Email verified successfully. You can now log in.")
+                .message("Email verified successfully. You need to wait for an admin to approve your registration before logging in.")
                 .build();
     }
 
@@ -262,6 +262,7 @@ public class AuthService {
         return AuthResponse.builder()
                 .accessToken(newAccessToken)
                 .refreshToken(newRefreshToken)
+                .tokenType("Bearer")
                 .user(userMapper.toUserResponse(user))
                 .build();
     }

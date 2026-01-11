@@ -100,21 +100,6 @@ public class UserService {
             updated = true;
         }
 
-        if (request.getEmail() != null) {
-            String newEmail = request.getEmail().toLowerCase();
-            if (!user.getEmail().equals(newEmail)) {
-                if (userRepository.existsByEmail(newEmail)) {
-                    throw new BadRequestException("Email already in use");
-                }
-                user.setEmail(newEmail);
-                user.setActive(false); // Require email verification again
-                changes.append("email (requires verification), ");
-                updated = true;
-
-                // TODO: Publish email verification event
-            }
-        }
-
         if (!updated) {
             throw new BadRequestException("No valid fields provided for update");
         }
@@ -129,6 +114,10 @@ public class UserService {
     public ApiResponse approveUser(UUID id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+
+        if (!user.getActive()) {
+            throw new BadRequestException("User did not confirm their email");
+        }
 
         if (user.getApproved()) {
             throw new BadRequestException("User is already approved");
