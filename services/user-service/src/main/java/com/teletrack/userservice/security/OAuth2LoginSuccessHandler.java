@@ -2,6 +2,7 @@ package com.teletrack.userservice.security;
 
 import com.teletrack.userservice.entity.UserRole;
 import com.teletrack.userservice.entity.User;
+import com.teletrack.userservice.repository.UserRepository;
 import com.teletrack.userservice.service.OAuthStateService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,9 +19,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -30,6 +31,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
     private final OAuth2UserService oAuth2UserService;
     private final JwtService jwtService;
     private final OAuthStateService oAuthStateService;
+    private final UserRepository userRepository;
 
     @Value("${app.frontend.url}")
     private String frontendUrl;
@@ -40,7 +42,10 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
             HttpServletResponse response,
             Authentication authentication
     ) throws IOException {
+        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
+        String email = oAuth2User.getAttribute("email");
 
+        // Extract state token from request
         String state = request.getParameter("state");
         String stateToken = null;
 
@@ -49,36 +54,45 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
             stateToken = URLDecoder.decode(parts[1], StandardCharsets.UTF_8);
         }
 
-        // roletoken is now available
-        log.debug("Received roletoken: {}", stateToken);
+        // Check if user exists
+        Optional<User> existingUser = userRepository.findByEmail(email);
+        boolean isRegistering = existingUser.isEmpty();
 
-        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-
-        if (stateToken == null || stateToken.isEmpty()) {
-            log.warn("OAuth callback missing state parameter");
-            redirectWithError(request, response, "Missing state parameter. Please initiate login via /auth/oauth/google?role=OPERATOR");
-            return;
-        }
-
-        // Validate state and get role
+        // Determine the role
         UserRole role;
-        try {
-            role = oAuthStateService.validateAndConsumeState(stateToken);
-            System.out.println("******* Login role = " + role);
-        } catch (IllegalArgumentException e) {
-            System.out.println("******* !Login role = ");
-            log.warn("Invalid OAuth state token: {}", stateToken);
-            redirectWithError(request, response, "Invalid or expired login session. Please try again.");
-            return;
+        if (isRegistering) {
+            // New user - require state token with role
+            if (stateToken == null || stateToken.isEmpty()) {
+                log.warn("OAuth callback missing state parameter for new user: {}", email);
+                redirectWithError(request, response,
+                        "Missing state parameter. Please initiate login via /auth/oauth/google?role=OPERATOR");
+                return;
+            }
+
+            // Validate state and get role
+            try {
+                role = oAuthStateService.validateAndConsumeState(stateToken);
+                log.debug("New user registration with role: {}", role);
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid OAuth state token for new user: {}", email);
+                redirectWithError(request, response,
+                        "Invalid or expired login session. Please try again.");
+                return;
+            }
+        } else {
+            // Existing user - use their existing role
+            role = existingUser.get().getRole();
+            log.debug("Existing user login with role: {}", role);
         }
 
-        // Process OAuth2 user with role
+        // Process OAuth2 user
         User user;
         try {
             user = oAuth2UserService.processOAuth2User(oAuth2User, role.name());
         } catch (Exception e) {
-            log.error("Error processing OAuth user", e);
-            redirectWithError(request, response, "Error creating user account. Please try again.");
+            log.error("Error processing OAuth user: {}", email, e);
+            redirectWithError(request, response,
+                    "Error creating user account. Please try again.");
             return;
         }
 
@@ -86,7 +100,17 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         if (!user.getApproved()) {
             SecurityContextHolder.clearContext();
             log.warn("Unapproved user attempted login: {}", user.getEmail());
-            redirectWithError(request, response, "Your account is pending approval");
+            redirectWithError(request, response,
+                    "Your account is pending approval");
+            return;
+        }
+
+        // Check if user is active
+        if (!user.getActive()) {
+            SecurityContextHolder.clearContext();
+            log.warn("Inactive user attempted login: {}", user.getEmail());
+            redirectWithError(request, response,
+                    "Your account has been deactivated");
             return;
         }
 
@@ -114,7 +138,11 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 
-    private void redirectWithError(HttpServletRequest request,HttpServletResponse response, String errorMessage) throws IOException {
+    private void redirectWithError(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            String errorMessage
+    ) throws IOException {
         String errorUrl = UriComponentsBuilder
                 .fromUriString(frontendUrl + "/oauth2/redirect")
                 .queryParam("success", false)
