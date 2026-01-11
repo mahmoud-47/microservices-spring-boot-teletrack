@@ -55,7 +55,7 @@
         <jwt.version>0.12.3</jwt.version>
 
         <!-- Documentation -->
-        <springdoc.version>2.3.0</springdoc.version>
+        <springdoc.version>2.6.0</springdoc.version>
 
         <!-- Resilience -->
         <resilience4j.version>2.2.0</resilience4j.version>

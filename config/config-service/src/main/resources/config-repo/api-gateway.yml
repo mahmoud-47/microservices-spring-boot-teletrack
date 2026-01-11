@@ -10,7 +10,30 @@ spring:
         locator:
           enabled: true
           lower-case-service-id: true
+
       routes:
+        # ============================================
+        # OAUTH2 ROUTES
+        # ============================================
+
+        - id: oauth2-authorization
+          uri: lb://user-service
+          predicates:
+            - Path=/oauth2/**
+          filters:
+            - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
+
+        - id: oauth2-login-callback
+          uri: lb://user-service
+          predicates:
+            - Path=/login/oauth2/**
+          filters:
+            - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
+
+        # ============================================
+        # USER SERVICE ROUTES
+        # ============================================
+
         # User Service - Auth Routes
         - id: user-service-auth
           uri: lb://user-service
@@ -37,6 +60,31 @@ spring:
                 name: userServiceCircuitBreaker
                 fallbackUri: forward:/fallback/users
 
+        # User Service - Admin Routes
+        - id: user-service-admin
+          uri: lb://user-service
+          predicates:
+            - Path=/api/v1/admin/**
+          filters:
+            - RewritePath=/api/v1/admin/(?<segment>.*), /admin/${segment}
+            - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
+            - name: CircuitBreaker
+              args:
+                name: userServiceCircuitBreaker
+                fallbackUri: forward:/fallback/users
+
+        # User Service - Swagger Docs
+        - id: user-service-swagger
+          uri: lb://user-service
+          predicates:
+            - Path=/user-service/v3/api-docs/**
+          filters:
+            - RewritePath=/user-service/v3/api-docs, /v3/api-docs
+
+        # ============================================
+        # INCIDENT SERVICE ROUTES
+        # ============================================
+
         # Incident Service Routes
         - id: incident-service
           uri: lb://incident-service
@@ -49,6 +97,18 @@ spring:
               args:
                 name: incidentServiceCircuitBreaker
                 fallbackUri: forward:/fallback/incidents
+
+        # Incident Service - Swagger Docs
+        - id: incident-service-swagger
+          uri: lb://incident-service
+          predicates:
+            - Path=/incident-service/v3/api-docs/**
+          filters:
+            - RewritePath=/incident-service/v3/api-docs, /v3/api-docs
+
+        # ============================================
+        # REPORTING SERVICE ROUTES
+        # ============================================
 
         # Reporting Service Routes
         - id: reporting-service
@@ -63,7 +123,19 @@ spring:
                 name: reportingServiceCircuitBreaker
                 fallbackUri: forward:/fallback/reporting
 
-        # Notification Service Routes (for health checks and manual access)
+        # Reporting Service - Swagger Docs
+        - id: reporting-service-swagger
+          uri: lb://reporting-service
+          predicates:
+            - Path=/reporting-service/v3/api-docs/**
+          filters:
+            - RewritePath=/reporting-service/v3/api-docs, /v3/api-docs
+
+        # ============================================
+        # NOTIFICATION SERVICE ROUTES
+        # ============================================
+
+        # Notification Service Routes
         - id: notification-service
           uri: lb://notification-service
           predicates:
@@ -72,10 +144,18 @@ spring:
             - RewritePath=/api/v1/notifications/(?<segment>.*), /notifications/${segment}
             - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
 
+        # Notification Service - Swagger Docs
+        - id: notification-service-swagger
+          uri: lb://notification-service
+          predicates:
+            - Path=/notification-service/v3/api-docs/**
+          filters:
+            - RewritePath=/notification-service/v3/api-docs, /v3/api-docs
+
 # Gateway Service Key Configuration
 gateway:
   service:
-    key: ${GATEWAY_SERVICE_KEY:sk_gateway_default_key_change_in_prod}
+    key: ${GATEWAY_SERVICE_KEY:sk_gateway_default_key}
 
 # Eureka Client Configuration
 eureka:
@@ -116,12 +196,29 @@ resilience4j:
         slow-call-duration-threshold: 5s
         slow-call-rate-threshold: 60
 
+# SpringDoc OpenAPI Configuration
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    urls:
+      - name: User Service
+        url: /user-service/v3/api-docs
+    tags-sorter: alpha
+    operations-sorter: alpha
+
 # Actuator Configuration
 management:
   endpoints:
     web:
       exposure:
         include: health,info,gateway,routes,metrics,prometheus
+  endpoint:
+    gateway:
+      enabled: true
   health:
     show-details: always
   metrics:
