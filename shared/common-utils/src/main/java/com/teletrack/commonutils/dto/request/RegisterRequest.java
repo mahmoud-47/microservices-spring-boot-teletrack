@@ -33,7 +33,7 @@ public class RegisterRequest {
 
     private Role role;
 
-    enum Role {
+    public enum Role {
         ADMIN,
         OPERATOR,
         SUPPORT
