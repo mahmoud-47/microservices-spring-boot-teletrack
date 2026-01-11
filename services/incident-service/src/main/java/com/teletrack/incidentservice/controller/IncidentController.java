@@ -73,7 +73,7 @@ public class IncidentController {
                 .build());
     }
 
-    @GetMapping("/list")
+    @GetMapping
     @PreAuthorize("hasAnyRole('SUPPORT', 'ADMIN')")
     @Operation(
             summary = "Get all incidents",

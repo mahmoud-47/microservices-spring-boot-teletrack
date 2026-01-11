@@ -38,7 +38,7 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
-    @GetMapping("/list")
+    @GetMapping
     @Operation(summary = "Get all users with pagination and optional role filter")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PageResponse<UserResponse>> getAllUsers(
