@@ -1,6 +1,7 @@
 package com.teletrack.incidentservice.client;
 
 import com.teletrack.commonutils.dto.response.UserResponse;
+import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -94,6 +95,22 @@ public class UserServiceCaller {
             return Optional.empty();
         } catch (Exception e) {
             log.error("Unexpected error fetching user {}: {}", userId, e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    public static Optional<String> getUserEmail(UUID userId) {
+        try {
+            UserResponse user = userServiceClient.getUserById(userId);
+            return Optional.ofNullable(user.getEmail());
+        } catch (FeignException.NotFound e) {
+            log.warn("User not found: {}", userId);
+            return Optional.empty();
+        } catch (FeignException.Forbidden e) {
+            log.warn("Access forbidden for user: {}", userId);
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("Error fetching user email for userId {}: {}", userId, e.getMessage());
             return Optional.empty();
         }
     }
