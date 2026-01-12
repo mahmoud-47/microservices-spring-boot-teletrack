@@ -1,14 +1,15 @@
-package com.teletrack.commonutils.client;
+package com.teletrack.incidentservice.client;
 
 import com.teletrack.commonutils.dto.response.UserResponse;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.UUID;
 
 /**
- * Feign client for User Service
+ * Documentation of Feign client for User Service
  * Other microservices should add this to their classpath to call User Service
  *
  * Usage:

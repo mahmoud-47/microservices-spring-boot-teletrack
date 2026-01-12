@@ -5,17 +5,20 @@ spring:
   application:
     name: api-gateway
   cloud:
+    loadbalancer:
+      eager-load:
+        enabled: true
+        clients: incident-service,user-service,reporting-service,notification-service
+      cache:
+        ttl: 5s
+        capacity: 256
     gateway:
+      httpclient:
+        response-timeout: 10s
       discovery:
         locator:
           enabled: true
-          lower-case-service-id: true
-
       routes:
-        # ============================================
-        # OAUTH2 ROUTES
-        # ============================================
-
         - id: oauth2-authorization
           uri: lb://user-service
           predicates:
@@ -30,50 +33,42 @@ spring:
           filters:
             - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
 
-        # ============================================
-        # USER SERVICE ROUTES
-        # ============================================
-
-        # User Service - Auth Routes
         - id: user-service-auth
           uri: lb://user-service
           predicates:
             - Path=/api/v1/auth/**
           filters:
-            - RewritePath=/api/v1/auth/(?<segment>.*), /auth/${segment}
+            - StripPrefix=2
             - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
             - name: CircuitBreaker
               args:
                 name: userServiceCircuitBreaker
                 fallbackUri: forward:/fallback/users
 
-        # User Service - Users Routes
         - id: user-service-users
           uri: lb://user-service
           predicates:
             - Path=/api/v1/users/**
           filters:
-            - RewritePath=/api/v1/users/(?<segment>.*), /users/${segment}
+            - StripPrefix=2
             - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
             - name: CircuitBreaker
               args:
                 name: userServiceCircuitBreaker
                 fallbackUri: forward:/fallback/users
 
-        # User Service - Admin Routes
         - id: user-service-admin
           uri: lb://user-service
           predicates:
             - Path=/api/v1/admin/**
           filters:
-            - RewritePath=/api/v1/admin/(?<segment>.*), /admin/${segment}
+            - StripPrefix=2
             - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
             - name: CircuitBreaker
               args:
                 name: userServiceCircuitBreaker
                 fallbackUri: forward:/fallback/users
 
-        # User Service - Swagger Docs
         - id: user-service-swagger
           uri: lb://user-service
           predicates:
@@ -81,24 +76,18 @@ spring:
           filters:
             - RewritePath=/user-service/v3/api-docs, /v3/api-docs
 
-        # ============================================
-        # INCIDENT SERVICE ROUTES
-        # ============================================
-
-        # Incident Service Routes
         - id: incident-service
           uri: lb://incident-service
           predicates:
             - Path=/api/v1/incidents/**
           filters:
-            - RewritePath=/api/v1/incidents/(?<segment>.*), /incidents/${segment}
+            - StripPrefix=2
             - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
             - name: CircuitBreaker
               args:
                 name: incidentServiceCircuitBreaker
                 fallbackUri: forward:/fallback/incidents
 
-        # Incident Service - Swagger Docs
         - id: incident-service-swagger
           uri: lb://incident-service
           predicates:
@@ -106,24 +95,18 @@ spring:
           filters:
             - RewritePath=/incident-service/v3/api-docs, /v3/api-docs
 
-        # ============================================
-        # REPORTING SERVICE ROUTES
-        # ============================================
-
-        # Reporting Service Routes
         - id: reporting-service
           uri: lb://reporting-service
           predicates:
             - Path=/api/v1/reports/**
           filters:
-            - RewritePath=/api/v1/reports/(?<segment>.*), /reports/${segment}
+            - StripPrefix=2
             - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
             - name: CircuitBreaker
               args:
                 name: reportingServiceCircuitBreaker
                 fallbackUri: forward:/fallback/reporting
 
-        # Reporting Service - Swagger Docs
         - id: reporting-service-swagger
           uri: lb://reporting-service
           predicates:
@@ -131,20 +114,14 @@ spring:
           filters:
             - RewritePath=/reporting-service/v3/api-docs, /v3/api-docs
 
-        # ============================================
-        # NOTIFICATION SERVICE ROUTES
-        # ============================================
-
-        # Notification Service Routes
         - id: notification-service
           uri: lb://notification-service
           predicates:
             - Path=/api/v1/notifications/**
           filters:
-            - RewritePath=/api/v1/notifications/(?<segment>.*), /notifications/${segment}
+            - StripPrefix=2
             - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
 
-        # Notification Service - Swagger Docs
         - id: notification-service-swagger
           uri: lb://notification-service
           predicates:
@@ -152,23 +129,22 @@ spring:
           filters:
             - RewritePath=/notification-service/v3/api-docs, /v3/api-docs
 
-# Gateway Service Key Configuration
 gateway:
   service:
     key: ${GATEWAY_SERVICE_KEY:sk_gateway_default_key}
 
-# Eureka Client Configuration
 eureka:
   client:
     service-url:
       defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
     register-with-eureka: true
     fetch-registry: true
+    registry-fetch-interval-seconds: 5
   instance:
     prefer-ip-address: true
     instance-id: ${spring.application.name}:${random.value}
+    lease-renewal-interval-in-seconds: 5
 
-# Resilience4J Circuit Breaker Configuration
 resilience4j:
   circuitbreaker:
     instances:
@@ -196,7 +172,6 @@ resilience4j:
         slow-call-duration-threshold: 5s
         slow-call-rate-threshold: 60
 
-# SpringDoc OpenAPI Configuration
 springdoc:
   api-docs:
     enabled: true
@@ -207,10 +182,11 @@ springdoc:
     urls:
       - name: User Service
         url: /user-service/v3/api-docs
+      - name: Incident Service
+        url: /incident-service/v3/api-docs
     tags-sorter: alpha
     operations-sorter: alpha
 
-# Actuator Configuration
 management:
   endpoints:
     web:
@@ -225,7 +201,6 @@ management:
     tags:
       application: ${spring.application.name}
 
-# Logging Configuration
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG

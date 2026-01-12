@@ -32,18 +32,28 @@ public class UserController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get user by ID")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'SUPPORT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'SUPPORT', 'SERVICE')")
     public ResponseEntity<UserResponse> getUserById(
             @Parameter(description = "User ID") @PathVariable UUID id) {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
-    @GetMapping("/list")
+    @GetMapping
     @Operation(summary = "Get all users with pagination and optional role filter")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PageResponse<UserResponse>> getAllUsers(
-            @Parameter(description = "Filter by role") @RequestParam(required = false) UserRole role,
-            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @RequestParam(required = false) UserRole role,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDir) {
+
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, sort);
+
         return ResponseEntity.ok(userService.getAllUsers(role, pageable));
     }
 
@@ -98,7 +108,10 @@ public class UserController {
     }
 
     @GetMapping("/validate/{id}")
-    @Operation(summary = "Validate if user exists and is active (for service-to-service calls)")
+    @Operation(
+            summary = "Validate if user exists and is active (for service-to-service calls)"
+    )
+    @PreAuthorize("hasRole('SERVICE')")
     public ResponseEntity<Boolean> validateUser(
             @Parameter(description = "User ID") @PathVariable UUID id) {
         return ResponseEntity.ok(userService.validateUser(id));
