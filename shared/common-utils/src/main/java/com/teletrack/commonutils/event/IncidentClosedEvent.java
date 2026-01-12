@@ -13,7 +13,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class IncidentAssignedEvent implements Serializable {
+public class IncidentClosedEvent implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String eventId;
@@ -23,8 +23,7 @@ public class IncidentAssignedEvent implements Serializable {
 
     private UUID incidentId;
     private String incidentTitle;
-    private UUID assignedTo;
-    private UUID assignedBy;
-    private String assigneeEmail;
+    private UUID closedBy;
+    private LocalDateTime closedAt;
     private String reporterEmail;
 }
