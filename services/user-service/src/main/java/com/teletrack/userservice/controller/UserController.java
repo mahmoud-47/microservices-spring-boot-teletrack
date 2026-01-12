@@ -32,7 +32,7 @@ public class UserController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get user by ID")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'SUPPORT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'SUPPORT', 'SERVICE')")
     public ResponseEntity<UserResponse> getUserById(
             @Parameter(description = "User ID") @PathVariable UUID id) {
         return ResponseEntity.ok(userService.getUserById(id));
@@ -98,7 +98,10 @@ public class UserController {
     }
 
     @GetMapping("/validate/{id}")
-    @Operation(summary = "Validate if user exists and is active (for service-to-service calls)")
+    @Operation(
+            summary = "Validate if user exists and is active (for service-to-service calls)"
+    )
+    @PreAuthorize("hasRole('SERVICE')")
     public ResponseEntity<Boolean> validateUser(
             @Parameter(description = "User ID") @PathVariable UUID id) {
         return ResponseEntity.ok(userService.validateUser(id));

@@ -32,6 +32,8 @@ import java.util.UUID;
 @Slf4j
 public class IncidentService {
 
+//    1/0; need to check user before assigning
+
     private final IncidentRepository incidentRepository;
     private final IncidentHistoryRepository incidentHistoryRepository;
     private final IncidentMapper incidentMapper;

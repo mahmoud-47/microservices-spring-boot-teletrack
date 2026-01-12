@@ -1,4 +1,4 @@
-package com.teletrack.commonutils.client;
+package com.teletrack.incidentservice.client;
 
 import com.teletrack.commonutils.dto.response.UserResponse;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -17,7 +17,6 @@ import java.util.UUID;
  * 2. Inject UserServiceClient where needed
  * 3. Call methods like: userServiceClient.validateUser(userId)
  */
-@Component
 @FeignClient(name = "user-service", path = "/users")
 public interface UserServiceClient {
 

@@ -1,9 +1,6 @@
 package com.teletrack.userservice.config;
 
-import com.teletrack.userservice.security.CustomAuthenticationEntryPoint;
-import com.teletrack.userservice.security.CustomUserDetailsService;
-import com.teletrack.userservice.security.JwtAuthenticationFilter;
-import com.teletrack.userservice.security.OAuth2LoginSuccessHandler;
+import com.teletrack.userservice.security.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,6 +37,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     private final ClientRegistrationRepository clientRegistrationRepository;
+    private final ServiceKeyAuthenticationFilter serviceKeyAuthFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -86,6 +84,8 @@ public class SecurityConfig {
                         exception.authenticationEntryPoint(new CustomAuthenticationEntryPoint())
                 )
                 .authenticationProvider(authenticationProvider())
+                // CRITICAL ORDER: Service key filter FIRST, then JWT filter
+                .addFilterBefore(serviceKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(auth -> auth

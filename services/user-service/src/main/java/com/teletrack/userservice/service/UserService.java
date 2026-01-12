@@ -266,6 +266,11 @@ public class UserService {
     }
 
     private UUID getCurrentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_SERVICE"))) {
+            return null; // Service call, no user ID
+        }
         return getCurrentUser().getId();
     }
 

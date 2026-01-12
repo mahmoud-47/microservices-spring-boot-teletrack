@@ -41,3 +41,6 @@ management:
       probes:
         enabled: true
 
+service:
+  api-key:
+    incident-service: ${INCIDENT-SERVICE-API-KEY:sk_incident_service} # dev key
