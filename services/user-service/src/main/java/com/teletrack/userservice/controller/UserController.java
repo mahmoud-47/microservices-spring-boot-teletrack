@@ -42,8 +42,18 @@ public class UserController {
     @Operation(summary = "Get all users with pagination and optional role filter")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PageResponse<UserResponse>> getAllUsers(
-            @Parameter(description = "Filter by role") @RequestParam(required = false) UserRole role,
-            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @RequestParam(required = false) UserRole role,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDir) {
+
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name())
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, sort);
+
         return ResponseEntity.ok(userService.getAllUsers(role, pageable));
     }
 

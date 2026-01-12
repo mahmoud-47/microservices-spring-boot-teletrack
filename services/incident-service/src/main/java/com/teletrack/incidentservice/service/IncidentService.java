@@ -9,7 +9,9 @@ import com.teletrack.commonutils.event.IncidentAssignedEvent;
 import com.teletrack.commonutils.event.IncidentCreatedEvent;
 import com.teletrack.commonutils.event.IncidentResolvedEvent;
 import com.teletrack.commonutils.event.IncidentStatusChangedEvent;
+import com.teletrack.commonutils.exception.BadRequestException;
 import com.teletrack.commonutils.exception.ResourceNotFoundException;
+import com.teletrack.incidentservice.client.UserServiceCaller;
 import com.teletrack.incidentservice.entity.Incident;
 import com.teletrack.incidentservice.entity.IncidentHistory;
 import com.teletrack.incidentservice.mapper.IncidentMapper;
@@ -31,8 +33,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class IncidentService {
-
-//    1/0; need to check user before assigning
 
     private final IncidentRepository incidentRepository;
     private final IncidentHistoryRepository incidentHistoryRepository;
@@ -141,6 +141,11 @@ public class IncidentService {
 
         Incident incident = incidentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Incident not found with id: " + id));
+
+        // validate user id
+        if(!UserServiceCaller.validateUser(request.getAssignedTo())){
+            throw new BadRequestException("User not found");
+        }
 
         UUID oldAssignee = incident.getAssignedTo();
         incident.setAssignedTo(request.getAssignedTo());
