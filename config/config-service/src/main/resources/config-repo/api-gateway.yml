@@ -184,6 +184,8 @@ springdoc:
         url: /user-service/v3/api-docs
       - name: Incident Service
         url: /incident-service/v3/api-docs
+      - name: Reporting Service
+        url: /reporting-service/v3/api-docs
     tags-sorter: alpha
     operations-sorter: alpha
 
