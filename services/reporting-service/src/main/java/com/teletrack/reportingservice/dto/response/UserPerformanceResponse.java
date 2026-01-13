@@ -14,8 +14,6 @@ import java.util.UUID;
 public class UserPerformanceResponse {
 
     private UUID userId;
-    private String userFirstName;
-    private String userLastName;
     private Long incidentsAssigned;
     private Long incidentsResolved;
     private Double averageResolutionTimeMinutes;

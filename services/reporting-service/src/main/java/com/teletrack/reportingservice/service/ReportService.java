@@ -81,6 +81,9 @@ public class ReportService {
                 .filter(i -> i.getAssignedTo() != null)
                 .collect(Collectors.groupingBy(IncidentReport::getAssignedTo));
 
+        System.out.println("+++++ list = " + allIncidents);
+        System.out.println("***** byAssignee = " + byAssignee);
+
         return byAssignee.entrySet().stream()
                 .map(entry -> {
                     UUID userId = entry.getKey();
