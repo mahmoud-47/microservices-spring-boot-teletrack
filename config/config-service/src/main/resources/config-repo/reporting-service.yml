@@ -20,11 +20,6 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
 
-  cache:
-    type: redis
-    redis:
-      time-to-live: 300000
-
 eureka:
   client:
     service-url:

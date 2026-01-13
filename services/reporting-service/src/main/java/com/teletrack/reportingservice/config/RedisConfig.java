@@ -12,6 +12,8 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 public class RedisConfig {
@@ -29,13 +31,19 @@ public class RedisConfig {
 
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
+        RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(10))
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()));
 
+        Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
+        cacheConfigurations.put("incident-summary", defaultConfig.entryTtl(Duration.ofMinutes(10)));
+        cacheConfigurations.put("trend-report", defaultConfig.entryTtl(Duration.ofMinutes(30)));
+        cacheConfigurations.put("user-performance", defaultConfig.entryTtl(Duration.ofMinutes(15)));
+
         return RedisCacheManager.builder(connectionFactory)
-                .cacheDefaults(config)
+                .cacheDefaults(defaultConfig)
+                .withInitialCacheConfigurations(cacheConfigurations)
                 .build();
     }
 }
