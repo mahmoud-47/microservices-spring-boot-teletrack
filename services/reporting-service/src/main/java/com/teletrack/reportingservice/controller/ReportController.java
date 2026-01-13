@@ -87,16 +87,23 @@ public class ReportController {
     )
     @PreAuthorize("hasAnyRole('OPERATOR', 'ADMIN')")
     public ResponseEntity<Map<String, Object>> getAIInsights() {
-        IncidentSummaryResponse summary = reportService.getIncidentSummary();
+        try {
+            IncidentSummaryResponse summary = reportService.getIncidentSummary();
 
-        Map<String, Object> reportData = new HashMap<>();
-        reportData.put("totalIncidents", summary.getTotalIncidents());
-        reportData.put("byStatus", summary.getByStatus());
-        reportData.put("byPriority", summary.getByPriority());
-        reportData.put("averageResolutionTimeMinutes", summary.getAverageResolutionTimeMinutes());
+            Map<String, Object> reportData = new HashMap<>();
+            reportData.put("totalIncidents", summary.getTotalIncidents());
+            reportData.put("byStatus", summary.getByStatus());
+            reportData.put("byPriority", summary.getByPriority());
+            reportData.put("averageResolutionTimeMinutes", summary.getAverageResolutionTimeMinutes());
 
-        Map<String, Object> insights = aiServiceClient.getInsights(reportData);
-        return ResponseEntity.ok(insights);
+            Map<String, Object> insights = aiServiceClient.getInsights(reportData);
+            return ResponseEntity.ok(insights);
+        } catch (Exception e) {
+            System.out.println("AI Service Error: " + e.getMessage());
+            Map<String, Object> errorMap = new HashMap<>();
+            errorMap.put("error", "AI Service call failed: " + e.getMessage());
+            return ResponseEntity.status(500).body(errorMap);
+        }
     }
 
     @PostMapping("/ai-summary")
