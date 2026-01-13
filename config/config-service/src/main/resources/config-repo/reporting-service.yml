@@ -6,13 +6,24 @@ spring:
     name: reporting-service
   datasource:
     url: ${REPORTING_DB_URL:jdbc:postgresql://localhost:5433/reporting_db}
-    username: ${REPORTING_DB_USERNAME:postgres}
-    password: ${REPORTING_DB_PASSWORD:postgres}
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: false
-    open-in-view: false
+    username: ${POSTGRES_USERNAME:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+    data:
+      mongodb:
+        uri: ${MONGODB_URI:mongodb://localhost:27017/teletrack_reports}
+      redis:
+        host: ${REDIS_HOST:localhost}
+        port: ${REDIS_PORT:6379}
+
+    jpa:
+      hibernate:
+        ddl-auto: none
+      properties:
+        hibernate:
+          dialect: org.hibernate.dialect.PostgreSQLDialect
+      show-sql: false
 
 eureka:
   client:
@@ -23,6 +34,7 @@ eureka:
   instance:
     prefer-ip-address: true
     instance-id: ${spring.application.name}:${random.value}
+
 
 management:
   endpoints:
