@@ -12,6 +12,8 @@ import org.thymeleaf.context.Context;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 
+import java.io.UnsupportedEncodingException;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -26,6 +28,9 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
+            // Use this to show the company name
+            helper.setFrom("noreply@teletrack360.com", "TeleTrack 360");
+
             helper.setTo(to);
             helper.setSubject(subject);
 
@@ -36,6 +41,8 @@ public class EmailService {
             log.info("Email sent successfully to: {}", to);
         } catch (MessagingException e) {
             log.error("Failed to send email to: {}. Error: {}", to, e.getMessage());
+        } catch (UnsupportedEncodingException e) {
+            log.error("Failed to send email  Unsupported encoding : {}. Error: {}", to, e.getMessage());
         }
     }
 }
