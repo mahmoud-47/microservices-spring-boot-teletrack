@@ -10,11 +10,12 @@ spring:
         enabled: true
         clients: incident-service,user-service,reporting-service,notification-service
       cache:
-        ttl: 5s
+        ttl: 35s
         capacity: 256
     gateway:
       httpclient:
-        response-timeout: 10s
+        connect-timeout: 5000
+        response-timeout: 35s
       discovery:
         locator:
           enabled: true
@@ -139,11 +140,11 @@ eureka:
       defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
     register-with-eureka: true
     fetch-registry: true
-    registry-fetch-interval-seconds: 5
+    registry-fetch-interval-seconds: 30
   instance:
     prefer-ip-address: true
     instance-id: ${spring.application.name}:${random.value}
-    lease-renewal-interval-in-seconds: 5
+    lease-renewal-interval-in-seconds: 30
 
 resilience4j:
   circuitbreaker:
@@ -161,7 +162,7 @@ resilience4j:
         failure-rate-threshold: 50
         wait-duration-in-open-state: 30s
         permitted-number-of-calls-in-half-open-state: 3
-        slow-call-duration-threshold: 5s
+        slow-call-duration-threshold: 10s
         slow-call-rate-threshold: 60
 
       reportingServiceCircuitBreaker:
@@ -169,8 +170,17 @@ resilience4j:
         failure-rate-threshold: 50
         wait-duration-in-open-state: 30s
         permitted-number-of-calls-in-half-open-state: 3
-        slow-call-duration-threshold: 5s
-        slow-call-rate-threshold: 60
+        slow-call-duration-threshold: 30s
+        slow-call-rate-threshold: 100
+
+  timelimiter:
+    instances:
+      userServiceCircuitBreaker:
+        timeout-duration: 5s
+      incidentServiceCircuitBreaker:
+        timeout-duration: 10s
+      reportingServiceCircuitBreaker:
+        timeout-duration: 30s
 
 springdoc:
   api-docs:
