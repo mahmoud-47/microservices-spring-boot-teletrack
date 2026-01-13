@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Map;
 
@@ -12,7 +13,8 @@ import java.util.Map;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TrendReportResponse {
+public class TrendReportResponse implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private String period;
     private LocalDate startDate;
