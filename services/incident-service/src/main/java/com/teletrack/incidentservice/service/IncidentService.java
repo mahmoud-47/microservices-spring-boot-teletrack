@@ -4,8 +4,10 @@ import com.teletrack.commonutils.dto.request.AssignIncidentRequest;
 import com.teletrack.commonutils.dto.request.CreateIncidentRequest;
 import com.teletrack.commonutils.dto.request.UpdateIncidentRequest;
 import com.teletrack.commonutils.dto.response.IncidentResponse;
+import com.teletrack.commonutils.dto.response.UserResponse;
 import com.teletrack.commonutils.enums.IncidentStatus;
 import com.teletrack.commonutils.event.IncidentAssignedEvent;
+import com.teletrack.commonutils.event.IncidentClosedEvent;
 import com.teletrack.commonutils.event.IncidentCreatedEvent;
 import com.teletrack.commonutils.event.IncidentResolvedEvent;
 import com.teletrack.commonutils.event.IncidentStatusChangedEvent;
@@ -53,11 +55,11 @@ public class IncidentService {
 
         incident = incidentRepository.save(incident);
 
-        // Create audit history
         createHistoryEntry(incident.getId(), userId, "INCIDENT_CREATED",
                 null, "Created with status: OPEN");
 
-        // Publish event
+        String reporterEmail = UserServiceCaller.getUserEmail(userId).orElse(null);
+
         IncidentCreatedEvent event = IncidentCreatedEvent.builder()
                 .eventId(UUID.randomUUID().toString())
                 .eventType("INCIDENT_CREATED")
@@ -68,6 +70,7 @@ public class IncidentService {
                 .description(incident.getDescription())
                 .priority(incident.getPriority())
                 .reportedBy(userId)
+                .reporterEmail(reporterEmail)
                 .build();
 
         eventPublisher.publishEvent("incident.created", event);
@@ -142,7 +145,6 @@ public class IncidentService {
         Incident incident = incidentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Incident not found with id: " + id));
 
-        // validate user id
         if(!UserServiceCaller.validateUser(request.getAssignedTo())){
             throw new BadRequestException("User not found");
         }
@@ -151,12 +153,13 @@ public class IncidentService {
         incident.setAssignedTo(request.getAssignedTo());
         incident = incidentRepository.save(incident);
 
-        // Create audit history
         createHistoryEntry(id, userId, "INCIDENT_ASSIGNED",
                 oldAssignee != null ? oldAssignee.toString() : "Unassigned",
                 request.getAssignedTo().toString());
 
-        // Publish event
+        String assigneeEmail = UserServiceCaller.getUserEmail(request.getAssignedTo()).orElse(null);
+        String reporterEmail = UserServiceCaller.getUserEmail(incident.getReportedBy()).orElse(null);
+
         IncidentAssignedEvent event = IncidentAssignedEvent.builder()
                 .eventId(UUID.randomUUID().toString())
                 .eventType("INCIDENT_ASSIGNED")
@@ -166,6 +169,8 @@ public class IncidentService {
                 .incidentTitle(incident.getTitle())
                 .assignedTo(request.getAssignedTo())
                 .assignedBy(userId)
+                .assigneeEmail(assigneeEmail)
+                .reporterEmail(reporterEmail)
                 .build();
 
         eventPublisher.publishEvent("incident.assigned", event);
@@ -210,8 +215,6 @@ public class IncidentService {
                 .map(this::toIncidentResponseWithHistory);
     }
 
-    // Helper methods
-
     private void changeStatusInternal(Incident incident, IncidentStatus newStatus, UUID userId) {
         IncidentStatus oldStatus = incident.getStatus();
 
@@ -221,11 +224,13 @@ public class IncidentService {
 
         incident.setStatus(newStatus);
 
-        // Set timestamps based on status
+        String reporterEmail = UserServiceCaller.getUserEmail(incident.getReportedBy()).orElse(null);
+        String assigneeEmail = incident.getAssignedTo() != null ?
+                UserServiceCaller.getUserEmail(incident.getAssignedTo()).orElse(null) : null;
+
         if (newStatus == IncidentStatus.RESOLVED) {
             incident.setResolvedAt(LocalDateTime.now());
 
-            // Publish resolved event
             long resolutionTimeMinutes = ChronoUnit.MINUTES.between(
                     incident.getCreatedAt(), incident.getResolvedAt());
 
@@ -239,18 +244,31 @@ public class IncidentService {
                     .resolvedBy(userId)
                     .resolvedAt(incident.getResolvedAt())
                     .resolutionTimeMinutes(resolutionTimeMinutes)
+                    .reporterEmail(reporterEmail)
                     .build();
 
             eventPublisher.publishEvent("incident.resolved", event);
         } else if (newStatus == IncidentStatus.CLOSED) {
             incident.setClosedAt(LocalDateTime.now());
+
+            IncidentClosedEvent event = IncidentClosedEvent.builder()
+                    .eventId(UUID.randomUUID().toString())
+                    .eventType("INCIDENT_CLOSED")
+                    .timestamp(LocalDateTime.now())
+                    .correlationId(UUID.randomUUID().toString())
+                    .incidentId(incident.getId())
+                    .incidentTitle(incident.getTitle())
+                    .closedBy(userId)
+                    .closedAt(incident.getClosedAt())
+                    .reporterEmail(reporterEmail)
+                    .build();
+
+            eventPublisher.publishEvent("incident.closed", event);
         }
 
-        // Create audit history
         createHistoryEntry(incident.getId(), userId, "STATUS_CHANGED",
                 oldStatus.name(), newStatus.name());
 
-        // Publish status changed event
         IncidentStatusChangedEvent event = IncidentStatusChangedEvent.builder()
                 .eventId(UUID.randomUUID().toString())
                 .eventType("INCIDENT_STATUS_CHANGED")
@@ -261,6 +279,8 @@ public class IncidentService {
                 .oldStatus(oldStatus)
                 .newStatus(newStatus)
                 .changedBy(userId)
+                .reporterEmail(reporterEmail)
+                .assigneeEmail(assigneeEmail)
                 .build();
 
         eventPublisher.publishEvent("incident.status.changed", event);

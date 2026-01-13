@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -13,17 +14,19 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class IncidentStatusChangedEvent {
+public class IncidentStatusChangedEvent implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private String eventId;
     private String eventType;
     private LocalDateTime timestamp;
     private String correlationId;
 
-    // Status change details
     private UUID incidentId;
     private String incidentTitle;
     private IncidentStatus oldStatus;
     private IncidentStatus newStatus;
     private UUID changedBy;
+    private String reporterEmail;
+    private String assigneeEmail;
 }

@@ -103,10 +103,16 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- Liquibase -->
+
+
 		<dependency>
-			<groupId>org.liquibase</groupId>
-			<artifactId>liquibase-core</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
 		</dependency>
 
 		<!-- ========== TEST DEPENDENCIES ========== -->

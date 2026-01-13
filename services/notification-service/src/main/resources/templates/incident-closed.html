@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Incident Closed</title>
+</head>
+<body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4;">
+<div style="max-width: 600px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 5px;">
+    <h2 style="color: #333;">Incident Closed</h2>
+
+    <p>Your incident has been closed.</p>
+
+    <table style="width: 100%; margin: 20px 0;">
+        <tr>
+            <td style="padding: 5px 0;"><strong>Incident ID:</strong></td>
+            <td style="padding: 5px 0;" th:text="${incidentId}"></td>
+        </tr>
+        <tr>
+            <td style="padding: 5px 0;"><strong>Title:</strong></td>
+            <td style="padding: 5px 0;" th:text="${title}"></td>
+        </tr>
+    </table>
+
+    <p>Thank you for using TeleTrack360.</p>
+
+    <p>Best regards,<br>TeleTrack360 Team</p>
+</div>
+</body>
+</html>
