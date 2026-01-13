@@ -21,6 +21,14 @@ spring:
           dialect: org.hibernate.dialect.PostgreSQLDialect
       show-sql: false
 
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: reporting-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+
 eureka:
   client:
     service-url:
@@ -37,3 +45,7 @@ management:
     web:
       exposure:
         include: health,info,metrics,prometheus
+
+ai:
+  service:
+    url: ${AI_SERVICE_URL:http://localhost:8085}
