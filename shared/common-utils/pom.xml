@@ -42,18 +42,31 @@
 			<artifactId>jakarta.validation-api</artifactId>
 		</dependency>
 
-		<!-- Spring Cloud OpenFeign (OPTIONAL - only for Feign client) -->
+		<!-- Spring Cloud OpenFeign (only for Feign client) -->
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-openfeign</artifactId>
 			<optional>true</optional>
 		</dependency>
 
-		<!-- Spring Web (OPTIONAL - for @GetMapping, @PathVariable annotations) -->
+		<!-- Spring Web (for @GetMapping, @PathVariable annotations) -->
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-web</artifactId>
 			<optional>true</optional>
+		</dependency>
+
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-observation</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-tracing-bridge-otel</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.opentelemetry</groupId>
+			<artifactId>opentelemetry-exporter-otlp</artifactId>
 		</dependency>
 	</dependencies>
 

@@ -19,3 +19,16 @@ logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# observability
+management:
+  tracing:
+    sampling:
+      probability: 1.0  
+  otlp:
+    tracing:
+      endpoint: http://jaeger:4318/v1/traces
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health, info, metrics
