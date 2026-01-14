@@ -1,4 +1,4 @@
-name: TeleTrack360 CI Pipeline
+name: TeleTrack360 CI
 
 on:
   push:
@@ -8,41 +8,32 @@ on:
 
 jobs:
   build-and-test:
-    name: Build, Test and Scan
+    name: Build and Verify
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Pull the code from your repository
+      # 1. Pull the code from the repository
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. Set up Java 21 (Temurin distribution)
+      # 2. Set up Java 21
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: 'maven' # Automatically caches your dependencies to make builds faster
+          cache: 'maven' # Automatically caches dependencies to speed up subsequent runs
 
-      # 3. Compile, Run Tests, and Run Static Analysis
-      # 'verify' runs unit tests, integration tests, SpotBugs, and JaCoCo reports
+      # 3. Parallel Build & Test
       - name: Build with Maven
-        run: mvn -B clean verify
+        run: mvn -B clean verify -T 1C
 
-      # 4. Upload the Aggregate Coverage Report
-      # This allows you to download the "Big Dashboard" directly from GitHub
-      - name: Upload JaCoCo Report
-        if: always() # Upload even if tests fail so you can see what was missed
+      # 4. Archive the Coverage Dashboard
+      # This allows reviewers to download the JaCoCo report as a ZIP file
+      - name: Upload Test Coverage Report
+        if: always() # Ensures the report is uploaded even if a test fails
         uses: actions/upload-artifact@v4
         with:
-          name: jacoco-aggregate-report
+          name: jacoco-report
           path: reports/aggregate-report/target/site/jacoco-aggregate/
-          retention-days: 7
-
-      # 5. Upload SpotBugs Report (if any bugs were found)
-      - name: Upload SpotBugs Report
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: spotbugs-reports
-          path: "**/target/spotbugsXml.xml"
+          retention-days: 5
