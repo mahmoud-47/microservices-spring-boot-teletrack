@@ -1,4 +1,4 @@
-package com.teletrack.incidentservice.config; // or com.teletrack.incidentservice.config
+package com.teletrack.apigateway.config;
 
 import io.micrometer.observation.ObservationPredicate;
 import io.micrometer.observation.ObservationRegistry;
@@ -7,7 +7,7 @@ import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.server.observation.ServerRequestObservationContext;
+import org.springframework.http.server.reactive.observation.ServerRequestObservationContext;
 
 @Configuration
 public class ObservabilityConfig {
@@ -16,14 +16,13 @@ public class ObservabilityConfig {
     ObservationPredicate observationFilters() {
         return (name, context) -> {
             if (context instanceof ServerRequestObservationContext serverContext) {
-                String uri = serverContext.getCarrier().getRequestURI();
-                if (uri != null && (uri.startsWith("/actuator") || uri.contains("/eureka"))) {
+                String path = serverContext.getCarrier().getURI().getPath();
+                if (path != null && (path.startsWith("/actuator") || path.contains("/eureka"))) {
                     return false;
                 }
             }
 
-            return !name.startsWith("spring.security") &&
-                    !name.contains("eureka");
+            return !name.startsWith("spring.security") && !name.contains("eureka");
         };
     }
 

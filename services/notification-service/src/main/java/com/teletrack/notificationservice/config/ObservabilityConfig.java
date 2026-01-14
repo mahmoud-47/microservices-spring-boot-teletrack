@@ -1,4 +1,4 @@
-package com.teletrack.incidentservice.config; // or com.teletrack.incidentservice.config
+package com.teletrack.notificationservice.config;
 
 import io.micrometer.observation.ObservationPredicate;
 import io.micrometer.observation.ObservationRegistry;

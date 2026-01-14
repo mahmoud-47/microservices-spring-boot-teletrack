@@ -1,6 +1,5 @@
-spring:
-  mvc:
-    dispatch-options-request: true
+tracing:
+  url: http://localhost:4317
 
 jwt:
   secret: ${JWT_SECRET:207c11ed092814462f1c6f5713f747770183a6513f8558cfbcbff824a2ba0820} # dev secret
@@ -24,7 +23,6 @@ logging:
     console: "%d{yyyy-MM-dd HH:mm:ss} %5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}] - %msg%n"
   include-details: true
 
-# ONE management block to rule them all
 management:
   endpoints:
     web:
@@ -39,10 +37,7 @@ management:
   tracing:
     sampling:
       probability: 1.0
-    otlp:
-      tracing:
-        endpoint: http://127.0.0.1:4318/v1/traces
-        transport: http
+
   observations:
     key-values:
       application: ${spring.application.name}
