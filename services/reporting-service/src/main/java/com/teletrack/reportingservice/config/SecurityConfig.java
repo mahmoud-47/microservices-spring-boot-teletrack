@@ -27,6 +27,10 @@ public class SecurityConfig {
                                 // Public auth endpoints
                                 "/reports/hello",
 
+                                //
+                                "/error",
+                                "/error/**",
+
                                 // Swagger/OpenAPI endpoints
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",

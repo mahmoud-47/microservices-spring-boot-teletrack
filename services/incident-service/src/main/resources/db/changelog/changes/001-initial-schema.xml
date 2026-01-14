@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20260114-1" author="mohamed">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="incidents"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="incidents">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="priority" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reported_by" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="assigned_to" type="UUID"/>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP"/>
+            <column name="resolved_at" type="TIMESTAMP"/>
+            <column name="closed_at" type="TIMESTAMP"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="20260114-2" author="mohamed">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="incident_history"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="incident_history">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="incident_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="action" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="old_value" type="VARCHAR(500)"/>
+            <column name="new_value" type="VARCHAR(500)"/>
+            <column name="timestamp" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_incident_status" tableName="incidents">
+            <column name="status"/>
+        </createIndex>
+        <createIndex indexName="idx_incident_assigned_to" tableName="incidents">
+            <column name="assigned_to"/>
+        </createIndex>
+        <createIndex indexName="idx_incident_reported_by" tableName="incidents">
+            <column name="reported_by"/>
+        </createIndex>
+        <createIndex indexName="idx_incident_created_at" tableName="incidents">
+            <column name="created_at"/>
+        </createIndex>
+        <createIndex indexName="idx_status_priority" tableName="incidents">
+            <column name="status"/>
+            <column name="priority"/>
+        </createIndex>
+
+        <createIndex indexName="idx_history_incident_timestamp" tableName="incident_history">
+            <column name="incident_id"/>
+            <column name="timestamp"/>
+        </createIndex>
+        <createIndex indexName="idx_history_user_id" tableName="incident_history">
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

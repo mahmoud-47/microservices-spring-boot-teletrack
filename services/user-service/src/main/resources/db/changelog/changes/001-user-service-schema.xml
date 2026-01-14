@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20260114-user-init" author="mohamed">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="users"/></not>
+        </preConditions>
+
+        <createTable tableName="users">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="email" type="VARCHAR(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="password_hash" type="VARCHAR(255)"/>
+            <column name="first_name" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_name" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_approved" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_users_email" tableName="users"><column name="email"/></createIndex>
+        <createIndex indexName="idx_users_role" tableName="users"><column name="role"/></createIndex>
+        <createIndex indexName="idx_users_is_active" tableName="users">
+            <column name="is_active"/>
+            <column name="is_approved"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="20260114-tokens-init" author="mohamed">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="refresh_tokens"/></not>
+        </preConditions>
+
+        <createTable tableName="refresh_tokens">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_rt_user" referencedTableName="users" referencedColumnNames="id"/>
+            </column>
+            <column name="token" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="expires_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_used" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="is_revoked" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_refresh_token_user" tableName="refresh_tokens">
+            <column name="user_id"/>
+            <column name="is_revoked"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="20260114-oauth-init" author="mohamed">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="oauth_states"/></not>
+        </preConditions>
+
+        <createTable tableName="oauth_states">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="state_token" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="role" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expires_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="used" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="20260114-verify-init" author="mohamed">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="email_verification_tokens"/></not>
+        </preConditions>
+
+        <createTable tableName="email_verification_tokens">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_evt_user" referencedTableName="users" referencedColumnNames="id"/>
+            </column>
+            <column name="token" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="expires_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_used" type="BOOLEAN" defaultValueBoolean="false"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="20260114-audit-init" author="mohamed">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="audit_logs"/></not>
+        </preConditions>
+
+        <createTable tableName="audit_logs">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="action" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ip_address" type="VARCHAR(45)"/>
+            <column name="timestamp" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="details" type="TEXT"/>
+        </createTable>
+
+        <createIndex indexName="idx_audit_logs_user_id" tableName="audit_logs"><column name="user_id"/></createIndex>
+        <createIndex indexName="idx_audit_logs_timestamp" tableName="audit_logs"><column name="timestamp"/></createIndex>
+        <createIndex indexName="idx_audit_logs_action" tableName="audit_logs"><column name="action"/></createIndex>
+    </changeSet>
+
+</databaseChangeLog>

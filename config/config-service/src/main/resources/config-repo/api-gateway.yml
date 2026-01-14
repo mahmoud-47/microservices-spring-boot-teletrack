@@ -4,6 +4,9 @@ server:
 spring:
   application:
     name: api-gateway
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
   cloud:
     loadbalancer:
       eager-load:
@@ -26,6 +29,11 @@ spring:
             - Path=/oauth2/**
           filters:
             - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5 # Allow 5 requests per second
+                redis-rate-limiter.burstCapacity: 10 # Allow up to 10 in a single second
+                key-resolver: "#{@userKeyResolver}"
 
         - id: oauth2-login-callback
           uri: lb://user-service
@@ -33,6 +41,11 @@ spring:
             - Path=/login/oauth2/**
           filters:
             - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5 # Allow 5 requests per second
+                redis-rate-limiter.burstCapacity: 10 # Allow up to 10 in a single second
+                key-resolver: "#{@userKeyResolver}"
 
         - id: user-service-auth
           uri: lb://user-service
@@ -41,6 +54,11 @@ spring:
           filters:
             - StripPrefix=2
             - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5 # Allow 5 requests per second
+                redis-rate-limiter.burstCapacity: 10 # Allow up to 10 in a single second
+                key-resolver: "#{@userKeyResolver}"
             - name: CircuitBreaker
               args:
                 name: userServiceCircuitBreaker
@@ -53,6 +71,11 @@ spring:
           filters:
             - StripPrefix=2
             - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5 # Allow 5 requests per second
+                redis-rate-limiter.burstCapacity: 10 # Allow up to 10 in a single second
+                key-resolver: "#{@userKeyResolver}"
             - name: CircuitBreaker
               args:
                 name: userServiceCircuitBreaker
@@ -65,6 +88,11 @@ spring:
           filters:
             - StripPrefix=2
             - AddRequestHeader=X-Gateway-Key, ${gateway.service.key}
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5 # Allow 5 requests per second
+                redis-rate-limiter.burstCapacity: 10 # Allow up to 10 in a single second
+                key-resolver: "#{@userKeyResolver}"
             - name: CircuitBreaker
               args:
                 name: userServiceCircuitBreaker
@@ -203,15 +231,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,gateway,routes,metrics,prometheus
+        include: health,info,metrics,prometheus,gateway,routes
   endpoint:
     gateway:
       enabled: true
-  health:
-    show-details: always
-  metrics:
-    tags:
-      application: ${spring.application.name}
 
 logging:
   level:
