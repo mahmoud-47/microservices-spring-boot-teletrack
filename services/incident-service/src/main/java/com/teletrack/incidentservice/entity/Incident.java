@@ -14,7 +14,13 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "incidents")
+@Table(name = "incidents", indexes = {
+        @Index(name = "idx_incident_status", columnList = "status"),
+        @Index(name = "idx_incident_assigned_to", columnList = "assigned_to"),
+        @Index(name = "idx_incident_reported_by", columnList = "reported_by"),
+        @Index(name = "idx_incident_created_at", columnList = "created_at"),
+        @Index(name = "idx_status_priority", columnList = "status, priority") // Composite index
+})
 @Data
 @Builder
 @NoArgsConstructor
