@@ -38,3 +38,6 @@ eureka:
 service:
   api-key:
     incident-service: ${INCIDENT-SERVICE-API-KEY:sk_incident_service} # dev key
+
+tracing:
+  url: http://localhost:4317

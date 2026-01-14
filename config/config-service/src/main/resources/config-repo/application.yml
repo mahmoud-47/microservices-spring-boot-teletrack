@@ -14,22 +14,21 @@ app:
     url: ${FRONT_URL:http://localhost:3000}
   base-url: ${BACK_URL:http://localhost:8080}
 
-# Logging Configuration
+
 logging:
   level:
     com.teletrack: DEBUG
     org.springframework.security: DEBUG
-    org.springframework.kafka: INFO
+    org.springframework.web: DEBUG
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss} %5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}] - %msg%n"
+  include-details: true
 
-# observability
+# ONE management block to rule them all
 management:
   endpoints:
     web:
       exposure:
-        # Include all common endpoints here
         include: health,info,metrics,prometheus
   endpoint:
     health:
@@ -42,5 +41,8 @@ management:
       probability: 1.0
     otlp:
       tracing:
-        endpoint: http://host.docker.internal:4318/v1/traces
+        endpoint: http://127.0.0.1:4318/v1/traces
         transport: http
+  observations:
+    key-values:
+      application: ${spring.application.name}
