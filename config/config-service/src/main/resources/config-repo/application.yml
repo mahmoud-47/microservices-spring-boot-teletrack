@@ -1,9 +1,13 @@
+spring:
+  mvc:
+    dispatch-options-request: true
+
 jwt:
   secret: ${JWT_SECRET:207c11ed092814462f1c6f5713f747770183a6513f8558cfbcbff824a2ba0820} # dev secret
   access-token:
-    expiration: 3600000 # 1 hour
+    expiration: 3600000
   refresh-token:
-    expiration: 2592000000 # 1 month
+    expiration: 2592000000
 
 app:
   frontend:
@@ -22,13 +26,21 @@ logging:
 
 # observability
 management:
-  tracing:
-    sampling:
-      probability: 1.0  
-  otlp:
-    tracing:
-      endpoint: http://jaeger:4318/v1/traces
   endpoints:
     web:
       exposure:
-        include: prometheus, health, info, metrics
+        # Include all common endpoints here
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  tracing:
+    sampling:
+      probability: 1.0
+    otlp:
+      tracing:
+        endpoint: http://host.docker.internal:4318/v1/traces
+        transport: http

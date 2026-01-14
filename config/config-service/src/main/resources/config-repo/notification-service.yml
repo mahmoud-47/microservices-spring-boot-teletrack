@@ -45,12 +45,3 @@ eureka:
     prefer-ip-address: true
     instance-id: ${spring.application.name}:${random.value}
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus
-  endpoint:
-    health:
-      probes:
-        enabled: true

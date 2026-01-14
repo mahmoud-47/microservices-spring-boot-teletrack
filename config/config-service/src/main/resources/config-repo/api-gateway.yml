@@ -203,15 +203,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,gateway,routes,metrics,prometheus
+        include: health,info,metrics,prometheus,gateway,routes
   endpoint:
     gateway:
       enabled: true
-  health:
-    show-details: always
-  metrics:
-    tags:
-      application: ${spring.application.name}
 
 logging:
   level:
