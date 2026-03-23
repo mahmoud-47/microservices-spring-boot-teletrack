@@ -17,7 +17,7 @@ public class LoadFakeUsers implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        String adminEmail = "admin@admin.com";
+        String adminEmail = "admin1@admin.com";
 
         // check if user already exists
         if (userRepository.findByEmail(adminEmail).isEmpty()) {
