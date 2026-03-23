@@ -19,6 +19,13 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
+          
+      - name: Install parent POM and common-utils to local Maven repo
+        run: |
+          mvn clean install -DskipTests -N
+          cd common-utils
+          mvn clean install -DskipTests
+          cd ..
 
       - name: Install common-utils to local Maven repo
         run: |
