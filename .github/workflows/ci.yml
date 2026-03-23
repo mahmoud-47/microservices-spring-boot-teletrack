@@ -6,98 +6,156 @@ on:
       - main
 
 jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      common: ${{ steps.filter.outputs.common }}
+      gateway: ${{ steps.filter.outputs.gateway }}
+      discovery: ${{ steps.filter.outputs.discovery }}
+      config: ${{ steps.filter.outputs.config }}
+      user: ${{ steps.filter.outputs.user }}
+      incident: ${{ steps.filter.outputs.incident }}
+      notification: ${{ steps.filter.outputs.notification }}
+      reporting: ${{ steps.filter.outputs.reporting }}
+      ai: ${{ steps.filter.outputs.ai }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            common:
+              - 'common-utils/**'
+              - 'pom.xml'
+            gateway:
+              - 'gateway/**'
+            discovery:
+              - 'discovery/**'
+            config:
+              - 'config/**'
+            user:
+              - 'services/user-service/**'
+            incident:
+              - 'services/incident-service/**'
+            notification:
+              - 'services/notification-service/**'
+            reporting:
+              - 'services/reporting-service/**'
+            ai:
+              - 'AI-Service/**'
+
   build-and-push:
     runs-on: ubuntu-latest
+    needs: detect-changes
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up JDK 21
+        # Only needed if any Java service changed
+        if: |
+          needs.detect-changes.outputs.common == 'true' ||
+          needs.detect-changes.outputs.gateway == 'true' ||
+          needs.detect-changes.outputs.discovery == 'true' ||
+          needs.detect-changes.outputs.config == 'true' ||
+          needs.detect-changes.outputs.user == 'true' ||
+          needs.detect-changes.outputs.incident == 'true' ||
+          needs.detect-changes.outputs.notification == 'true' ||
+          needs.detect-changes.outputs.reporting == 'true'
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
 
-      - name: Install parent POM and common-utils to local Maven repo
+      - name: Install parent POM and common-utils
+        if: |
+          needs.detect-changes.outputs.common == 'true' ||
+          needs.detect-changes.outputs.gateway == 'true' ||
+          needs.detect-changes.outputs.discovery == 'true' ||
+          needs.detect-changes.outputs.config == 'true' ||
+          needs.detect-changes.outputs.user == 'true' ||
+          needs.detect-changes.outputs.incident == 'true' ||
+          needs.detect-changes.outputs.notification == 'true' ||
+          needs.detect-changes.outputs.reporting == 'true'
         run: |
           mvn clean install -DskipTests -N
-          cd shared/common-utils
+          cd common-utils
           mvn clean install -DskipTests
-          cd ../..
+          cd ..
 
       - name: Log in to DockerHub
+        if: |
+          needs.detect-changes.outputs.common == 'true' ||
+          needs.detect-changes.outputs.gateway == 'true' ||
+          needs.detect-changes.outputs.discovery == 'true' ||
+          needs.detect-changes.outputs.config == 'true' ||
+          needs.detect-changes.outputs.user == 'true' ||
+          needs.detect-changes.outputs.incident == 'true' ||
+          needs.detect-changes.outputs.notification == 'true' ||
+          needs.detect-changes.outputs.reporting == 'true' ||
+          needs.detect-changes.outputs.ai == 'true'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # ─────────────────────────────────────────────
-      # BUILD JAVA SERVICES
+      # If common-utils changed, rebuild ALL Java services
       # ─────────────────────────────────────────────
 
       - name: Build Gateway
+        if: needs.detect-changes.outputs.gateway == 'true' || needs.detect-changes.outputs.common == 'true'
         run: |
-          cd gateway/api-gateway
-          mvn clean package -DskipTests
-          cd ../..
+          cd gateway/api-gateway && mvn clean package -DskipTests && cd ../..
           docker build -t mahmoudmhd47/teletrack-ms-gateway:latest ./gateway/api-gateway
           docker push mahmoudmhd47/teletrack-ms-gateway:latest
 
       - name: Build Discovery Service
+        if: needs.detect-changes.outputs.discovery == 'true' || needs.detect-changes.outputs.common == 'true'
         run: |
-          cd discovery/discovery-service
-          mvn clean package -DskipTests
-          cd ../..
+          cd discovery/discovery-service && mvn clean package -DskipTests && cd ../..
           docker build -t mahmoudmhd47/teletrack-ms-discovery:latest ./discovery/discovery-service
           docker push mahmoudmhd47/teletrack-ms-discovery:latest
 
       - name: Build Config Service
+        if: needs.detect-changes.outputs.config == 'true' || needs.detect-changes.outputs.common == 'true'
         run: |
-          cd config/config-service
-          mvn clean package -DskipTests
-          cd ../..
+          cd config/config-service && mvn clean package -DskipTests && cd ../..
           docker build -t mahmoudmhd47/teletrack-ms-config:latest ./config/config-service
           docker push mahmoudmhd47/teletrack-ms-config:latest
 
       - name: Build User Service
+        if: needs.detect-changes.outputs.user == 'true' || needs.detect-changes.outputs.common == 'true'
         run: |
-          cd services/user-service
-          mvn clean package -DskipTests
-          cd ../..
+          cd services/user-service && mvn clean package -DskipTests && cd ../..
           docker build -t mahmoudmhd47/teletrack-ms-user-service:latest ./services/user-service
           docker push mahmoudmhd47/teletrack-ms-user-service:latest
 
       - name: Build Incident Service
+        if: needs.detect-changes.outputs.incident == 'true' || needs.detect-changes.outputs.common == 'true'
         run: |
-          cd services/incident-service
-          mvn clean package -DskipTests
-          cd ../..
+          cd services/incident-service && mvn clean package -DskipTests && cd ../..
           docker build -t mahmoudmhd47/teletrack-ms-incident-service:latest ./services/incident-service
           docker push mahmoudmhd47/teletrack-ms-incident-service:latest
 
       - name: Build Notification Service
+        if: needs.detect-changes.outputs.notification == 'true' || needs.detect-changes.outputs.common == 'true'
         run: |
-          cd services/notification-service
-          mvn clean package -DskipTests
-          cd ../..
+          cd services/notification-service && mvn clean package -DskipTests && cd ../..
           docker build -t mahmoudmhd47/teletrack-ms-notification-service:latest ./services/notification-service
           docker push mahmoudmhd47/teletrack-ms-notification-service:latest
 
       - name: Build Reporting Service
+        if: needs.detect-changes.outputs.reporting == 'true' || needs.detect-changes.outputs.common == 'true'
         run: |
-          cd services/reporting-service
-          mvn clean package -DskipTests
-          cd ../..
+          cd services/reporting-service && mvn clean package -DskipTests && cd ../..
           docker build -t mahmoudmhd47/teletrack-ms-reporting-service:latest ./services/reporting-service
           docker push mahmoudmhd47/teletrack-ms-reporting-service:latest
 
-      # ─────────────────────────────────────────────
-      # BUILD PYTHON AI SERVICE
-      # ─────────────────────────────────────────────
-
       - name: Build AI Service
+        if: needs.detect-changes.outputs.ai == 'true'
         run: |
           docker build -t mahmoudmhd47/teletrack-ms-ai-service:latest ./AI-Service
           docker push mahmoudmhd47/teletrack-ms-ai-service:latest
