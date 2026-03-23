@@ -81,9 +81,9 @@ jobs:
           needs.detect-changes.outputs.reporting == 'true'
         run: |
           mvn clean install -DskipTests -N
-          cd common-utils
+          cd shared/common-utils
           mvn clean install -DskipTests
-          cd ..
+          cd ../..
 
       - name: Log in to DockerHub
         if: |
