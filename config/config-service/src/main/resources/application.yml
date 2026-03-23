@@ -13,6 +13,7 @@ spring:
           # I'm goona leave this guy public as the project is public
 #          username: ${GIT_USERNAME}
 #          password: ${GIT_TOKEN}
+#
 
 eureka:
   client:
