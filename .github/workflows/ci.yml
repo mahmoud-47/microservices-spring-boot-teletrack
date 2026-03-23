@@ -20,6 +20,12 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Install common-utils to local Maven repo
+        run: |
+          cd common-utils
+          mvn clean install -DskipTests
+          cd ..
+
       - name: Log in to DockerHub
         uses: docker/login-action@v3
         with:
