@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>OAuth2LoginSuccessHandler.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">TeleTrack360 Global Coverage Report</a> &gt; <a href="../index.html" class="el_bundle">user-service</a> &gt; <a href="index.source.html" class="el_package">com.teletrack.userservice.security</a> &gt; <span class="el_source">OAuth2LoginSuccessHandler.java</span></div><h1>OAuth2LoginSuccessHandler.java</h1><pre class="source lang-java linenums">package com.teletrack.userservice.security;
+
+import com.teletrack.userservice.entity.UserRole;
+import com.teletrack.userservice.entity.User;
+import com.teletrack.userservice.repository.UserRepository;
+import com.teletrack.userservice.service.OAuthStateService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
+import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
+<span class="nc" id="L26">@Slf4j</span>
+@Component
+@RequiredArgsConstructor
+public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
+
+    private final OAuth2UserService oAuth2UserService;
+    private final JwtService jwtService;
+    private final OAuthStateService oAuthStateService;
+    private final UserRepository userRepository;
+
+    @Value(&quot;${app.frontend.url}&quot;)
+    private String frontendUrl;
+
+    @Override
+    public void onAuthenticationSuccess(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            Authentication authentication
+    ) throws IOException {
+<span class="nc" id="L45">        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();</span>
+<span class="nc" id="L46">        String email = oAuth2User.getAttribute(&quot;email&quot;);</span>
+
+        // Extract state token from request
+<span class="nc" id="L49">        String state = request.getParameter(&quot;state&quot;);</span>
+<span class="nc" id="L50">        String stateToken = null;</span>
+
+<span class="nc bnc" id="L52" title="All 4 branches missed.">        if (state != null &amp;&amp; state.contains(&quot;::&quot;)) {</span>
+<span class="nc" id="L53">            String[] parts = state.split(&quot;::&quot;, 2);</span>
+<span class="nc" id="L54">            stateToken = URLDecoder.decode(parts[1], StandardCharsets.UTF_8);</span>
+        }
+
+        // Check if user exists
+<span class="nc" id="L58">        Optional&lt;User&gt; existingUser = userRepository.findByEmail(email);</span>
+<span class="nc" id="L59">        boolean isRegistering = existingUser.isEmpty();</span>
+
+        // Determine the role
+        UserRole role;
+<span class="nc bnc" id="L63" title="All 2 branches missed.">        if (isRegistering) {</span>
+            // New user - require state token with role
+<span class="nc bnc" id="L65" title="All 4 branches missed.">            if (stateToken == null || stateToken.isEmpty()) {</span>
+<span class="nc" id="L66">                log.warn(&quot;OAuth callback missing state parameter for new user: {}&quot;, email);</span>
+<span class="nc" id="L67">                redirectWithError(request, response,</span>
+                        &quot;Missing state parameter. Please initiate login via /auth/oauth/google?role=OPERATOR&quot;);
+<span class="nc" id="L69">                return;</span>
+            }
+
+            // Validate state and get role
+            try {
+<span class="nc" id="L74">                role = oAuthStateService.validateAndConsumeState(stateToken);</span>
+<span class="nc" id="L75">                log.debug(&quot;New user registration with role: {}&quot;, role);</span>
+<span class="nc" id="L76">            } catch (IllegalArgumentException e) {</span>
+<span class="nc" id="L77">                log.warn(&quot;Invalid OAuth state token for new user: {}&quot;, email);</span>
+<span class="nc" id="L78">                redirectWithError(request, response,</span>
+                        &quot;Invalid or expired login session. Please try again.&quot;);
+<span class="nc" id="L80">                return;</span>
+<span class="nc" id="L81">            }</span>
+        } else {
+            // Existing user - use their existing role
+<span class="nc" id="L84">            role = existingUser.get().getRole();</span>
+<span class="nc" id="L85">            log.debug(&quot;Existing user login with role: {}&quot;, role);</span>
+        }
+
+        // Process OAuth2 user
+        User user;
+        try {
+<span class="nc" id="L91">            user = oAuth2UserService.processOAuth2User(oAuth2User, role.name());</span>
+<span class="nc" id="L92">        } catch (Exception e) {</span>
+<span class="nc" id="L93">            log.error(&quot;Error processing OAuth user: {}&quot;, email, e);</span>
+<span class="nc" id="L94">            redirectWithError(request, response,</span>
+                    &quot;Error creating user account. Please try again.&quot;);
+<span class="nc" id="L96">            return;</span>
+<span class="nc" id="L97">        }</span>
+
+        // Check if user is approved
+<span class="nc bnc" id="L100" title="All 2 branches missed.">        if (!user.getApproved()) {</span>
+<span class="nc" id="L101">            SecurityContextHolder.clearContext();</span>
+<span class="nc" id="L102">            log.warn(&quot;Unapproved user attempted login: {}&quot;, user.getEmail());</span>
+<span class="nc" id="L103">            redirectWithError(request, response,</span>
+                    &quot;Your account is pending approval&quot;);
+<span class="nc" id="L105">            return;</span>
+        }
+
+        // Check if user is active
+<span class="nc bnc" id="L109" title="All 2 branches missed.">        if (!user.getActive()) {</span>
+<span class="nc" id="L110">            SecurityContextHolder.clearContext();</span>
+<span class="nc" id="L111">            log.warn(&quot;Inactive user attempted login: {}&quot;, user.getEmail());</span>
+<span class="nc" id="L112">            redirectWithError(request, response,</span>
+                    &quot;Your account has been deactivated&quot;);
+<span class="nc" id="L114">            return;</span>
+        }
+
+        // Generate tokens
+<span class="nc" id="L118">        CustomUserDetails userDetails = new CustomUserDetails(user);</span>
+
+<span class="nc" id="L120">        Map&lt;String, Object&gt; claims = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L121">        claims.put(&quot;userId&quot;, user.getId().toString());</span>
+<span class="nc" id="L122">        claims.put(&quot;role&quot;, user.getRole().toString());</span>
+
+<span class="nc" id="L124">        String accessToken = jwtService.generateAccessToken(userDetails, claims);</span>
+<span class="nc" id="L125">        String refreshToken = oAuth2UserService.createRefreshToken(user);</span>
+
+<span class="nc" id="L127">        log.info(&quot;OAuth login successful for user: {} with role: {}&quot;, user.getEmail(), role);</span>
+
+        // Redirect with tokens
+<span class="nc" id="L130">        String targetUrl = UriComponentsBuilder</span>
+<span class="nc" id="L131">                .fromUriString(frontendUrl + &quot;/oauth2/redirect&quot;)</span>
+<span class="nc" id="L132">                .queryParam(&quot;success&quot;, true)</span>
+<span class="nc" id="L133">                .queryParam(&quot;accessToken&quot;, accessToken)</span>
+<span class="nc" id="L134">                .queryParam(&quot;refreshToken&quot;, refreshToken)</span>
+<span class="nc" id="L135">                .build()</span>
+<span class="nc" id="L136">                .toUriString();</span>
+
+<span class="nc" id="L138">        getRedirectStrategy().sendRedirect(request, response, targetUrl);</span>
+<span class="nc" id="L139">    }</span>
+
+    private void redirectWithError(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            String errorMessage
+    ) throws IOException {
+<span class="nc" id="L146">        String errorUrl = UriComponentsBuilder</span>
+<span class="nc" id="L147">                .fromUriString(frontendUrl + &quot;/oauth2/redirect&quot;)</span>
+<span class="nc" id="L148">                .queryParam(&quot;success&quot;, false)</span>
+<span class="nc" id="L149">                .queryParam(&quot;error&quot;, errorMessage)</span>
+<span class="nc" id="L150">                .build()</span>
+<span class="nc" id="L151">                .toUriString();</span>
+
+<span class="nc" id="L153">        getRedirectStrategy().sendRedirect(request, response, errorUrl);</span>
+<span class="nc" id="L154">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span>Generated on 2026-01-14T18:48:44Z</div></body></html>

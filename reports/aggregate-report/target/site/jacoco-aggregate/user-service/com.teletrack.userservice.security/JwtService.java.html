@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>JwtService.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">TeleTrack360 Global Coverage Report</a> &gt; <a href="../index.html" class="el_bundle">user-service</a> &gt; <a href="index.source.html" class="el_package">com.teletrack.userservice.security</a> &gt; <span class="el_source">JwtService.java</span></div><h1>JwtService.java</h1><pre class="source lang-java linenums">package com.teletrack.userservice.security;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
+
+import javax.crypto.SecretKey;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
+
+@Service
+<span class="nc" id="L18">public class JwtService {</span>
+
+    @Value(&quot;${jwt.secret}&quot;)
+    private String secretKey;
+
+    @Value(&quot;${jwt.access-token.expiration}&quot;)
+    private long accessTokenExpiration; // in milliseconds
+
+    @Value(&quot;${jwt.refresh-token.expiration}&quot;)
+    private long refreshTokenExpiration; // in milliseconds
+
+    public String extractUsername(String token) {
+<span class="nc" id="L30">        return extractClaim(token, Claims::getSubject);</span>
+    }
+
+    public &lt;T&gt; T extractClaim(String token, Function&lt;Claims, T&gt; claimsResolver) {
+<span class="nc" id="L34">        final Claims claims = extractAllClaims(token);</span>
+<span class="nc" id="L35">        return claimsResolver.apply(claims);</span>
+    }
+
+    public String generateAccessToken(UserDetails userDetails, Map&lt;String, Object&gt; extraClaims) {
+<span class="nc" id="L39">        return buildToken(extraClaims, userDetails, accessTokenExpiration);</span>
+    }
+
+    public String generateRefreshToken(UserDetails userDetails) {
+<span class="nc" id="L43">        return buildToken(new HashMap&lt;&gt;(), userDetails, refreshTokenExpiration);</span>
+    }
+
+    private String buildToken(
+            Map&lt;String, Object&gt; extraClaims,
+            UserDetails userDetails,
+            long expiration
+    ) {
+<span class="nc" id="L51">        return Jwts.builder()</span>
+<span class="nc" id="L52">                .claims(extraClaims)</span>
+<span class="nc" id="L53">                .subject(userDetails.getUsername())</span>
+<span class="nc" id="L54">                .issuedAt(new Date(System.currentTimeMillis()))</span>
+<span class="nc" id="L55">                .expiration(new Date(System.currentTimeMillis() + expiration))</span>
+<span class="nc" id="L56">                .signWith(getSignInKey())</span>
+<span class="nc" id="L57">                .compact();</span>
+    }
+
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+<span class="nc" id="L61">        final String username = extractUsername(token);</span>
+<span class="nc bnc" id="L62" title="All 4 branches missed.">        return (username.equals(userDetails.getUsername())) &amp;&amp; !isTokenExpired(token);</span>
+    }
+
+    private boolean isTokenExpired(String token) {
+<span class="nc" id="L66">        return extractExpiration(token).before(new Date());</span>
+    }
+
+    private Date extractExpiration(String token) {
+<span class="nc" id="L70">        return extractClaim(token, Claims::getExpiration);</span>
+    }
+
+    private Claims extractAllClaims(String token) {
+<span class="nc" id="L74">        return Jwts.parser()</span>
+<span class="nc" id="L75">                .verifyWith(getSignInKey())</span>
+<span class="nc" id="L76">                .build()</span>
+<span class="nc" id="L77">                .parseSignedClaims(token)</span>
+<span class="nc" id="L78">                .getPayload();</span>
+    }
+
+    private SecretKey getSignInKey() {
+<span class="nc" id="L82">        byte[] keyBytes = Decoders.BASE64.decode(secretKey);</span>
+<span class="nc" id="L83">        return Keys.hmacShaKeyFor(keyBytes);</span>
+    }
+
+    public long getRefreshTokenExpiration() {
+<span class="nc" id="L87">        return refreshTokenExpiration;</span>
+    }
+
+    public long getAccessTokenExpiration(){
+<span class="nc" id="L91">        return accessTokenExpiration;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span>Generated on 2026-01-14T18:48:44Z</div></body></html>

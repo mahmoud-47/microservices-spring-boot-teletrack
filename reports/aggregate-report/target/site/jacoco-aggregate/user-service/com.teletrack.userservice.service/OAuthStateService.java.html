@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>OAuthStateService.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">TeleTrack360 Global Coverage Report</a> &gt; <a href="../index.html" class="el_bundle">user-service</a> &gt; <a href="index.source.html" class="el_package">com.teletrack.userservice.service</a> &gt; <span class="el_source">OAuthStateService.java</span></div><h1>OAuthStateService.java</h1><pre class="source lang-java linenums">package com.teletrack.userservice.service;
+
+import com.teletrack.userservice.entity.OAuthState;
+import com.teletrack.userservice.entity.UserRole;
+import com.teletrack.userservice.repository.OAuthStateRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.UUID;
+
+<span class="nc" id="L15">@Slf4j</span>
+@Service
+@RequiredArgsConstructor
+public class OAuthStateService {
+
+    private final OAuthStateRepository oAuthStateRepository;
+
+    /**
+     * Create a new OAuth state token with associated role
+     */
+    @Transactional
+    public String createState(UserRole role) {
+<span class="nc" id="L27">        String stateToken = UUID.randomUUID().toString();</span>
+
+<span class="nc" id="L29">        OAuthState oauthState = OAuthState.builder()</span>
+<span class="nc" id="L30">                .stateToken(stateToken)</span>
+<span class="nc" id="L31">                .role(role)</span>
+<span class="nc" id="L32">                .build();</span>
+
+<span class="nc" id="L34">        oAuthStateRepository.save(oauthState);</span>
+
+<span class="nc" id="L36">        log.info(&quot;Created OAuth state token for role: {}&quot;, role);</span>
+<span class="nc" id="L37">        return stateToken;</span>
+    }
+
+    /**
+     * Validate and consume OAuth state token
+     * Returns the role if valid, throws exception otherwise
+     */
+    @Transactional
+    public UserRole validateAndConsumeState(String stateToken) {
+<span class="nc" id="L46">        Optional&lt;OAuthState&gt; oauthState = oAuthStateRepository</span>
+<span class="nc" id="L47">                .findByStateTokenAndUsedFalseAndExpiresAtAfter(</span>
+                        stateToken,
+<span class="nc" id="L49">                        LocalDateTime.now()</span>
+                );
+
+<span class="nc bnc" id="L52" title="All 2 branches missed.">        if (oauthState.isEmpty()) {</span>
+<span class="nc" id="L53">            log.warn(&quot;Invalid or expired OAuth state token: {}&quot;, stateToken);</span>
+<span class="nc" id="L54">            throw new IllegalArgumentException(&quot;Invalid or expired OAuth state&quot;);</span>
+        }
+
+<span class="nc" id="L57">        OAuthState state = oauthState.get();</span>
+
+        // Mark as used (one-time use only)
+<span class="nc" id="L60">        state.setUsed(true);</span>
+<span class="nc" id="L61">        oAuthStateRepository.save(state);</span>
+
+<span class="nc" id="L63">        log.info(&quot;OAuth state token consumed for role: {}&quot;, state.getRole());</span>
+<span class="nc" id="L64">        return state.getRole();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span>Generated on 2026-01-14T18:48:44Z</div></body></html>

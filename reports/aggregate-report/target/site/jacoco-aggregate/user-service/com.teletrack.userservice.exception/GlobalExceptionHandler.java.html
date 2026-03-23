@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>GlobalExceptionHandler.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">TeleTrack360 Global Coverage Report</a> &gt; <a href="../index.html" class="el_bundle">user-service</a> &gt; <a href="index.source.html" class="el_package">com.teletrack.userservice.exception</a> &gt; <span class="el_source">GlobalExceptionHandler.java</span></div><h1>GlobalExceptionHandler.java</h1><pre class="source lang-java linenums">package com.teletrack.userservice.exception;
+
+import com.teletrack.commonutils.exception.BadRequestException;
+import com.teletrack.commonutils.exception.ResourceNotFoundException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
+<span class="nc" id="L20">@Slf4j</span>
+@RestControllerAdvice
+@io.swagger.v3.oas.annotations.Hidden
+<span class="nc" id="L23">public class GlobalExceptionHandler {</span>
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity&lt;?&gt; handleValidationExceptions(
+            MethodArgumentNotValidException ex,
+            WebRequest request) {
+
+<span class="nc" id="L30">        Map&lt;String, String&gt; errors = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L31">        ex.getBindingResult().getAllErrors().forEach((error) -&gt; {</span>
+<span class="nc" id="L32">            String fieldName = ((FieldError) error).getField();</span>
+<span class="nc" id="L33">            String errorMessage = error.getDefaultMessage();</span>
+<span class="nc" id="L34">            errors.put(fieldName, errorMessage);</span>
+<span class="nc" id="L35">        });</span>
+
+<span class="nc" id="L37">        log.warn(&quot;Validation failed: {}&quot;, errors);</span>
+
+<span class="nc" id="L39">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L40">        response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L41">        response.put(&quot;message&quot;, &quot;Validation failed&quot;);</span>
+<span class="nc" id="L42">        response.put(&quot;errors&quot;, errors);</span>
+<span class="nc" id="L43">        response.put(&quot;timestamp&quot;, LocalDateTime.now());</span>
+<span class="nc" id="L44">        response.put(&quot;path&quot;, request.getDescription(false).replace(&quot;uri=&quot;, &quot;&quot;));</span>
+
+<span class="nc" id="L46">        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);</span>
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity&lt;?&gt; handleBadCredentials(
+            BadCredentialsException ex,
+            WebRequest request) {
+
+<span class="nc" id="L54">        log.warn(&quot;Bad credentials attempt: {}&quot;, ex.getMessage());</span>
+
+<span class="nc" id="L56">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L57">        response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L58">        response.put(&quot;message&quot;, &quot;Invalid email or password&quot;);</span>
+<span class="nc" id="L59">        response.put(&quot;timestamp&quot;, LocalDateTime.now());</span>
+<span class="nc" id="L60">        response.put(&quot;path&quot;, request.getDescription(false).replace(&quot;uri=&quot;, &quot;&quot;));</span>
+
+<span class="nc" id="L62">        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);</span>
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity&lt;?&gt; handleAuthenticationException(
+            AuthenticationException ex,
+            WebRequest request) {
+
+<span class="nc" id="L70">        log.warn(&quot;Authentication failed: {}&quot;, ex.getMessage());</span>
+
+<span class="nc" id="L72">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L73">        response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L74">        response.put(&quot;message&quot;, &quot;Authentication failed&quot;);</span>
+<span class="nc" id="L75">        response.put(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L76">        response.put(&quot;timestamp&quot;, LocalDateTime.now());</span>
+<span class="nc" id="L77">        response.put(&quot;path&quot;, request.getDescription(false).replace(&quot;uri=&quot;, &quot;&quot;));</span>
+
+<span class="nc" id="L79">        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);</span>
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity&lt;?&gt; handleResourceNotFoundException(
+            ResourceNotFoundException ex,
+            WebRequest request) {
+
+<span class="nc" id="L87">        log.warn(&quot;Resource not found: {}&quot;, ex.getMessage());</span>
+
+<span class="nc" id="L89">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L90">        response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L91">        response.put(&quot;message&quot;, ex.getMessage());</span>
+<span class="nc" id="L92">        response.put(&quot;timestamp&quot;, LocalDateTime.now());</span>
+<span class="nc" id="L93">        response.put(&quot;path&quot;, request.getDescription(false).replace(&quot;uri=&quot;, &quot;&quot;));</span>
+
+<span class="nc" id="L95">        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);</span>
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity&lt;?&gt; handleBadRequestException(
+            BadRequestException ex,
+            WebRequest request) {
+
+<span class="nc" id="L103">        log.warn(&quot;Bad request: {}&quot;, ex.getMessage());</span>
+
+<span class="nc" id="L105">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L106">        response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L107">        response.put(&quot;message&quot;, ex.getMessage());</span>
+<span class="nc" id="L108">        response.put(&quot;timestamp&quot;, LocalDateTime.now());</span>
+<span class="nc" id="L109">        response.put(&quot;path&quot;, request.getDescription(false).replace(&quot;uri=&quot;, &quot;&quot;));</span>
+
+<span class="nc" id="L111">        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);</span>
+    }
+
+//    @ExceptionHandler(DuplicateResourceException.class)
+//    public ResponseEntity&lt;?&gt; handleDuplicateResourceException(
+//            DuplicateResourceException ex,
+//            WebRequest request) {
+//
+//        log.warn(&quot;Duplicate resource: {}&quot;, ex.getMessage());
+//
+//        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();
+//        response.put(&quot;success&quot;, false);
+//        response.put(&quot;message&quot;, ex.getMessage());
+//        response.put(&quot;timestamp&quot;, LocalDateTime.now());
+//        response.put(&quot;path&quot;, request.getDescription(false).replace(&quot;uri=&quot;, &quot;&quot;));
+//
+//        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+//    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity&lt;?&gt; handleGlobalException(
+            Exception ex,
+            WebRequest request) {
+
+<span class="nc" id="L135">        log.error(&quot;Unexpected error occurred: &quot;, ex);</span>
+
+<span class="nc" id="L137">        Map&lt;String, Object&gt; response = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L138">        response.put(&quot;success&quot;, false);</span>
+<span class="nc" id="L139">        response.put(&quot;message&quot;, &quot;An unexpected error occurred&quot;);</span>
+<span class="nc" id="L140">        response.put(&quot;error&quot;, ex.getMessage());</span>
+<span class="nc" id="L141">        response.put(&quot;timestamp&quot;, LocalDateTime.now());</span>
+<span class="nc" id="L142">        response.put(&quot;path&quot;, request.getDescription(false).replace(&quot;uri=&quot;, &quot;&quot;));</span>
+
+<span class="nc" id="L144">        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span>Generated on 2026-01-14T18:48:44Z</div></body></html>

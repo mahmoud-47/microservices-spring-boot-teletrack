@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>AuthController.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">TeleTrack360 Global Coverage Report</a> &gt; <a href="../index.html" class="el_bundle">user-service</a> &gt; <a href="index.source.html" class="el_package">com.teletrack.userservice.controller</a> &gt; <span class="el_source">AuthController.java</span></div><h1>AuthController.java</h1><pre class="source lang-java linenums">package com.teletrack.userservice.controller;
+
+import com.teletrack.commonutils.dto.request.EmailVerificationRequest;
+import com.teletrack.commonutils.dto.request.LoginRequest;
+import com.teletrack.commonutils.dto.request.RefreshTokenRequest;
+import com.teletrack.commonutils.dto.request.RegisterRequest;
+import com.teletrack.commonutils.dto.response.ApiResponse;
+import com.teletrack.commonutils.dto.response.AuthResponse;
+import com.teletrack.commonutils.dto.response.UserResponse;
+import com.teletrack.userservice.service.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping(&quot;/auth&quot;)
+@RequiredArgsConstructor
+@Tag(name = &quot;Authentication&quot;, description = &quot;Endpoints for user registration, login, oauth : http://localhost:8080/oauth2/authorization/google?state=role:OPERATOR&quot;)
+public class AuthController {
+
+    private final AuthService authService;
+
+    @PostMapping(&quot;/register&quot;)
+    @Operation(summary = &quot;Register a new user&quot;)
+    public ResponseEntity&lt;ApiResponse&gt; register(@Valid @RequestBody RegisterRequest request) {
+<span class="nc" id="L32">        return ResponseEntity.ok(authService.register(request));</span>
+    }
+
+    @PostMapping(&quot;/login&quot;)
+    @Operation(
+            summary = &quot;Login a user&quot;,
+            description = &quot;Login with email and password.&quot;
+    )
+    public ResponseEntity&lt;?&gt; login(@Valid @RequestBody LoginRequest request) {
+<span class="nc" id="L41">        Object response = authService.login(request);</span>
+<span class="nc" id="L42">        return ResponseEntity.ok(response);</span>
+    }
+
+    @GetMapping(&quot;/email/confirm&quot;)
+    @Operation(summary = &quot;Confirm user email via token&quot;)
+    public ResponseEntity&lt;ApiResponse&gt; confirmEmail(
+            @Parameter(description = &quot;Email confirmation token&quot;) @RequestParam String token) {
+<span class="nc" id="L49">        return ResponseEntity.ok(authService.verifyEmail(token));</span>
+    }
+
+    @PostMapping(&quot;/email/verify&quot;)
+    @Operation(summary = &quot;Resend verification email&quot;)
+    public ResponseEntity&lt;ApiResponse&gt; resendVerificationEmail(
+            @Valid @RequestBody EmailVerificationRequest request) {
+<span class="nc" id="L56">        return ResponseEntity.ok(authService.resendVerificationEmail(request));</span>
+    }
+
+
+    @PostMapping(&quot;/refresh&quot;)
+    @Operation(summary = &quot;Refresh JWT access token&quot;)
+    public ResponseEntity&lt;AuthResponse&gt; refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
+<span class="nc" id="L63">        return ResponseEntity.ok(authService.refreshToken(request));</span>
+    }
+
+    @GetMapping(&quot;/me&quot;)
+    @Operation(
+            summary = &quot;Get the current authenticated user&quot;,
+            security = @SecurityRequirement(name = &quot;bearerAuth&quot;)
+    )
+    @PreAuthorize(&quot;hasAnyRole('ADMIN', 'OPERATOR', 'SUPPORT')&quot;)
+    public ResponseEntity&lt;UserResponse&gt; getCurrentUser() {
+<span class="nc" id="L73">        return ResponseEntity.ok(authService.getCurrentUser());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span>Generated on 2026-01-14T18:48:44Z</div></body></html>

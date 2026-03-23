@@ -1,148 +1,386 @@
-version: '3.8'
+networks:
+  teletrack-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  mongo-data:
+  redis-data:
+  grafana-data:
+  prometheus-data:
 
 services:
-  # PostgreSQL Database
+
+  # ─────────────────────────────────────────────
+  # INFRASTRUCTURE
+  # ─────────────────────────────────────────────
+
   postgres:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
+    pull_policy: always
     container_name: teletrack-postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: postgres
-    ports:
-      - "5433:5432"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./deployment/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     networks:
-      - teletrack-network
+      - teletrack-net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
-    restart: unless-stopped
 
-
-  # MongoDB
-  mongodb:
-    image: mongo:7.0
-    container_name: teletrack-mongodb
-    ports:
-      - "27017:27017"
+  mongo:
+    image: mongo:7
+    pull_policy: always
+    container_name: teletrack-mongo
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME:-admin}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-admin}
-      MONGO_INITDB_DATABASE: teletrack_reports
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
     volumes:
-      - mongodb-data:/data/db
+      - mongo-data:/data/db
     networks:
-      - teletrack-network
+      - teletrack-net
     healthcheck:
-      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
-    restart: unless-stopped
 
-  # Redis
   redis:
     image: redis:7-alpine
+    pull_policy: always
     container_name: teletrack-redis
-    ports:
-      - "6379:6379"
     volumes:
       - redis-data:/data
     networks:
-      - teletrack-network
+      - teletrack-net
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
 
-  # Zookeeper
   zookeeper:
-    image: confluentinc/cp-zookeeper:7.5.0
+    image: confluentinc/cp-zookeeper:7.6.0
+    pull_policy: always
     container_name: teletrack-zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     networks:
-      - teletrack-network
-    restart: unless-stopped
-
-  # Kafka
-  kafka:
-    image: confluentinc/cp-kafka:7.5.0
-    container_name: teletrack-kafka
-    depends_on:
-      - zookeeper
-    ports:
-      - "9092:9092"
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    networks:
-      - teletrack-network
+      - teletrack-net
     healthcheck:
-      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      test: [ "CMD", "bash", "-c", "echo ruok | timeout 2 bash -c 'cat > /dev/tcp/localhost/2181' && echo ok" ]
       interval: 10s
       timeout: 10s
       retries: 5
-      start_period: 20s
-    restart: unless-stopped
+      start_period: 15s
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    pull_policy: always
+    container_name: teletrack-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - teletrack-net
+    healthcheck:
+      test: [ "CMD", "bash", "-c", "kafka-broker-api-versions --bootstrap-server localhost:9092" ]
+      interval: 15s
+      timeout: 15s
+      retries: 8
+      start_period: 30s
 
   jaeger:
-    image: jaegertracing/all-in-one:1.53
+    image: jaegertracing/all-in-one:1.56
+    pull_policy: always
     container_name: teletrack-jaeger
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
     ports:
-      - "16686:16686" # Web UI
-      - "4317:4317"   # OTLP gRPC
-      - "4318:4318"   # OTLP HTTP for spboot apps
+      - "16686:16686"   # Jaeger UI
+      - "4317:4317"     # OTLP gRPC
+      - "4318:4318"     # OTLP HTTP
     networks:
-      - teletrack-network
-    restart: unless-stopped
+      - teletrack-net
 
-  # Prometheus - Metrics Scraper
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.51.0
+    pull_policy: always
     container_name: teletrack-prometheus
     volumes:
-      - ./deployment/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./deployment/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
     ports:
       - "9090:9090"
     networks:
-      - teletrack-network
-    restart: unless-stopped
+      - teletrack-net
 
-  # Grafana - Visualization
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:10.4.0
+    pull_policy: always
     container_name: teletrack-grafana
-    ports:
-      - "3001:3000" # Mapped to 3001 to avoid conflicts with frontend
+    depends_on:
+      - prometheus
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3001:3000"
     networks:
-      - teletrack-network
-    restart: unless-stopped
+      - teletrack-net
 
-volumes:
-  postgres-data:
-    driver: local
-  mongodb-data:
-    driver: local
-  redis-data:
-    driver: local
+  # ─────────────────────────────────────────────
+  # SERVICE DISCOVERY (no config dependency)
+  # ─────────────────────────────────────────────
 
-networks:
-  teletrack-network:
-    driver: bridge
+  discovery-service:
+    image: teletrack-ms-discovery
+    pull_policy: never
+    container_name: teletrack-discovery
+    environment:
+      TRACING_URL: http://jaeger:4317
+    ports:
+      - "8761:8761"
+    networks:
+      - teletrack-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8761/actuator/health | grep UP || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+
+  # ─────────────────────────────────────────────
+  # CONFIG SERVER (depends on discovery)
+  # ─────────────────────────────────────────────
+
+  config-service:
+    image: teletrack-ms-config
+    pull_policy: never
+    container_name: teletrack-config
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      TRACING_URL: http://jaeger:4317
+    ports:
+      - "8888:8888"
+    networks:
+      - teletrack-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8888/actuator/health | grep UP || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+
+  # ─────────────────────────────────────────────
+  # AI SERVICE (Python — no Eureka/Config)
+  # ─────────────────────────────────────────────
+
+  ai-service:
+    image: teletrack-ms-ai-service
+    pull_policy: never
+    container_name: teletrack-ai-service
+    ports:
+      - "8085:8085"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    networks:
+      - teletrack-net
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8085/health')" ]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  # ─────────────────────────────────────────────
+  # SPRING BOOT MICROSERVICES
+  # ─────────────────────────────────────────────
+
+  user-service:
+    image: teletrack-ms-user-service
+    pull_policy: never
+    container_name: teletrack-user-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+    environment:
+      SPRING_CONFIG_IMPORT: "configserver:http://config-service:8888"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      USER_DB_URL: jdbc:postgresql://postgres:5432/users_db
+      USER_DB_USERNAME: postgres
+      USER_DB_PASSWORD: postgres
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      TRACING_URL: http://jaeger:4317
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      JWT_SECRET: ${JWT_SECRET}
+      GATEWAY_SERVICE_KEY: ${GATEWAY_SERVICE_KEY}
+      INCIDENT-SERVICE-API-KEY: ${INCIDENT_SERVICE_API_KEY}
+    networks:
+      - teletrack-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health | grep UP || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+
+  incident-service:
+    image: teletrack-ms-incident-service
+    pull_policy: never
+    container_name: teletrack-incident-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+    environment:
+      SPRING_CONFIG_IMPORT: "configserver:http://config-service:8888"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      INCIDENT_DB_URL: jdbc:postgresql://postgres:5432/incidents_db
+      INCIDENT_DB_USERNAME: postgres
+      INCIDENT_DB_PASSWORD: postgres
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      TRACING_URL: http://jaeger:4317
+      JWT_SECRET: ${JWT_SECRET}
+      INCIDENT-SERVICE-API-KEY: ${INCIDENT_SERVICE_API_KEY}
+    networks:
+      - teletrack-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/actuator/health | grep UP || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+
+  notification-service:
+    image: teletrack-ms-notification-service
+    pull_policy: never
+    container_name: teletrack-notification-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+    environment:
+      SPRING_CONFIG_IMPORT: "configserver:http://config-service:8888"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      NOTIFICATION_DB_URL: jdbc:postgresql://postgres:5432/notification_db
+      NOTIFICATION_DB_USERNAME: postgres
+      NOTIFICATION_DB_PASSWORD: postgres
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      TRACING_URL: http://jaeger:4317
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+    networks:
+      - teletrack-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8083/actuator/health | grep UP || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+
+  reporting-service:
+    image: teletrack-ms-reporting-service
+    pull_policy: never
+    container_name: teletrack-reporting-service
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+      ai-service:
+        condition: service_healthy
+    environment:
+      SPRING_CONFIG_IMPORT: "configserver:http://config-service:8888"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      MONGO_USERNAME: admin
+      MONGO_PASSWORD: admin
+      MONGO_HOST: mongo
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      AI_SERVICE_URL: http://ai-service:8085
+      TRACING_URL: http://jaeger:4317
+      JWT_SECRET: ${JWT_SECRET}
+    networks:
+      - teletrack-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8084/actuator/health | grep UP || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+
+  # ─────────────────────────────────────────────
+  # API GATEWAY (last — depends on everything)
+  # ─────────────────────────────────────────────
+
+  api-gateway:
+    image: teletrack-ms-gateway
+    pull_policy: never
+    container_name: teletrack-gateway
+    depends_on:
+      redis:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      incident-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+      reporting-service:
+        condition: service_healthy
+    environment:
+      SPRING_CONFIG_IMPORT: "configserver:http://config-service:8888"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      TRACING_URL: http://jaeger:4317
+      JWT_SECRET: ${JWT_SECRET}
+      GATEWAY_SERVICE_KEY: ${GATEWAY_SERVICE_KEY}
+      FRONT_URL: ${FRONT_URL:-http://localhost:3000}
+      BACK_URL: http://api-gateway:8080
+    ports:
+      - "8080:8080"
+    networks:
+      - teletrack-net

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>IpAddressUtil.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">TeleTrack360 Global Coverage Report</a> &gt; <a href="../index.html" class="el_bundle">user-service</a> &gt; <a href="index.source.html" class="el_package">com.teletrack.userservice.util</a> &gt; <span class="el_source">IpAddressUtil.java</span></div><h1>IpAddressUtil.java</h1><pre class="source lang-java linenums">package com.teletrack.userservice.util;
+
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.experimental.UtilityClass;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+@UtilityClass
+public class IpAddressUtil {
+
+<span class="fc" id="L11">    private static final String[] IP_HEADER_CANDIDATES = {</span>
+            &quot;X-Forwarded-For&quot;,
+            &quot;Proxy-Client-IP&quot;,
+            &quot;WL-Proxy-Client-IP&quot;,
+            &quot;HTTP_X_FORWARDED_FOR&quot;,
+            &quot;HTTP_X_FORWARDED&quot;,
+            &quot;HTTP_X_CLUSTER_CLIENT_IP&quot;,
+            &quot;HTTP_CLIENT_IP&quot;,
+            &quot;HTTP_FORWARDED_FOR&quot;,
+            &quot;HTTP_FORWARDED&quot;,
+            &quot;HTTP_VIA&quot;,
+            &quot;REMOTE_ADDR&quot;
+    };
+
+    /**
+     * Extract client IP address from current HTTP request
+     * Handles proxies and load balancers
+     */
+    public static String getClientIpAddress() {
+<span class="fc" id="L30">        HttpServletRequest request = getCurrentRequest();</span>
+<span class="pc bpc" id="L31" title="1 of 2 branches missed.">        if (request == null) {</span>
+<span class="fc" id="L32">            return &quot;UNKNOWN&quot;;</span>
+        }
+
+<span class="nc bnc" id="L35" title="All 2 branches missed.">        for (String header : IP_HEADER_CANDIDATES) {</span>
+<span class="nc" id="L36">            String ip = request.getHeader(header);</span>
+<span class="nc bnc" id="L37" title="All 6 branches missed.">            if (ip != null &amp;&amp; !ip.isEmpty() &amp;&amp; !&quot;unknown&quot;.equalsIgnoreCase(ip)) {</span>
+                // X-Forwarded-For can contain multiple IPs, get the first one
+<span class="nc bnc" id="L39" title="All 2 branches missed.">                if (ip.contains(&quot;,&quot;)) {</span>
+<span class="nc" id="L40">                    ip = ip.split(&quot;,&quot;)[0].trim();</span>
+                }
+<span class="nc" id="L42">                return ip;</span>
+            }
+        }
+
+<span class="nc" id="L46">        return request.getRemoteAddr();</span>
+    }
+
+    private static HttpServletRequest getCurrentRequest() {
+<span class="fc" id="L50">        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();</span>
+<span class="pc bpc" id="L51" title="1 of 2 branches missed.">        return attributes != null ? attributes.getRequest() : null;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span>Generated on 2026-01-14T18:48:44Z</div></body></html>

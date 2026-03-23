@@ -2,7 +2,7 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
-COPY services/incident-service/target/incident-service-1.0.0.jar app.jar
+COPY target/incident-service-1.0.0.jar app.jar
 
 EXPOSE 8082
 

@@ -1,7 +1,12 @@
+#spring:
+#  application:
+#    name: api-gateway
+#  cloud:
+#    config:
+#      uri: ${CONFIG_SERVER_URL:http://localhost:8888}
+#      fail-fast: true
 spring:
   application:
     name: api-gateway
-  cloud:
-    config:
-      uri: http://localhost:8888   # Config Server address
-      fail-fast: true              # Fail immediately if server is unavailable
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}

@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>IncidentController.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">TeleTrack360 Global Coverage Report</a> &gt; <a href="../index.html" class="el_bundle">incident-service</a> &gt; <a href="index.source.html" class="el_package">com.teletrack.incidentservice.controller</a> &gt; <span class="el_source">IncidentController.java</span></div><h1>IncidentController.java</h1><pre class="source lang-java linenums">package com.teletrack.incidentservice.controller;
+
+import com.teletrack.commonutils.dto.request.AssignIncidentRequest;
+import com.teletrack.commonutils.dto.request.CreateIncidentRequest;
+import com.teletrack.commonutils.dto.request.UpdateIncidentRequest;
+import com.teletrack.commonutils.dto.response.ApiResponse;
+import com.teletrack.commonutils.dto.response.IncidentResponse;
+import com.teletrack.commonutils.dto.response.PageResponse;
+import com.teletrack.commonutils.enums.IncidentStatus;
+import com.teletrack.incidentservice.service.IncidentService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
+
+@RestController
+@RequestMapping(&quot;/incidents&quot;)
+@RequiredArgsConstructor
+@Tag(name = &quot;Incident Management&quot;, description = &quot;APIs for managing telecom incidents throughout their lifecycle&quot;)
+public class IncidentController {
+
+    private final IncidentService incidentService;
+
+    @PostMapping
+    @PreAuthorize(&quot;hasAnyRole('OPERATOR', 'SUPPORT', 'ADMIN')&quot;)
+    @Operation(
+            summary = &quot;Create a new incident&quot;,
+            description = &quot;Create a new incident report. Available to OPERATOR, SUPPORT, and ADMIN roles.&quot;,
+            security = @SecurityRequirement(name = &quot;bearerAuth&quot;)
+    )
+    public ResponseEntity&lt;ApiResponse&gt; createIncident(
+            @Valid @RequestBody CreateIncidentRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+<span class="nc" id="L48">        UUID userId = extractUserId(userDetails);</span>
+<span class="nc" id="L49">        IncidentResponse incident = incidentService.createIncident(request, userId);</span>
+
+<span class="nc" id="L51">        return ResponseEntity.status(HttpStatus.CREATED)</span>
+<span class="nc" id="L52">                .body(ApiResponse.builder()</span>
+<span class="nc" id="L53">                        .success(true)</span>
+<span class="nc" id="L54">                        .message(&quot;Incident created successfully&quot;)</span>
+<span class="nc" id="L55">                        .data(incident)</span>
+<span class="nc" id="L56">                        .build());</span>
+    }
+
+    @GetMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @Operation(
+            summary = &quot;Get incident by ID&quot;,
+            description = &quot;Retrieve detailed information about a specific incident including its history&quot;,
+            security = @SecurityRequirement(name = &quot;bearerAuth&quot;)
+    )
+    public ResponseEntity&lt;ApiResponse&gt; getIncidentById(@PathVariable UUID id) {
+<span class="nc" id="L67">        IncidentResponse incident = incidentService.getIncidentById(id);</span>
+
+<span class="nc" id="L69">        return ResponseEntity.ok(ApiResponse.builder()</span>
+<span class="nc" id="L70">                .success(true)</span>
+<span class="nc" id="L71">                .message(&quot;Incident retrieved successfully&quot;)</span>
+<span class="nc" id="L72">                .data(incident)</span>
+<span class="nc" id="L73">                .build());</span>
+    }
+
+    @GetMapping
+    @PreAuthorize(&quot;hasAnyRole('SUPPORT', 'ADMIN')&quot;)
+    @Operation(
+            summary = &quot;Get all incidents&quot;,
+            description = &quot;Retrieve paginated list of all incidents. Available to SUPPORT and ADMIN roles only.&quot;,
+            security = @SecurityRequirement(name = &quot;bearerAuth&quot;)
+    )
+    public ResponseEntity&lt;ApiResponse&gt; getAllIncidents(
+            @RequestParam(defaultValue = &quot;0&quot;) int page,
+            @RequestParam(defaultValue = &quot;20&quot;) int size,
+            @RequestParam(defaultValue = &quot;createdAt&quot;) String sortBy,
+            @RequestParam(defaultValue = &quot;DESC&quot;) String sortDir) {
+
+<span class="nc bnc" id="L89" title="All 2 branches missed.">        Sort sort = sortDir.equalsIgnoreCase(&quot;ASC&quot;) ?</span>
+<span class="nc" id="L90">                Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();</span>
+<span class="nc" id="L91">        Pageable pageable = PageRequest.of(page, size, sort);</span>
+
+<span class="nc" id="L93">        Page&lt;IncidentResponse&gt; incidents = incidentService.getAllIncidents(pageable);</span>
+
+<span class="nc" id="L95">        PageResponse&lt;IncidentResponse&gt; pageResponse = PageResponse.&lt;IncidentResponse&gt;builder()</span>
+<span class="nc" id="L96">                .content(incidents.getContent())</span>
+<span class="nc" id="L97">                .page(incidents.getNumber())</span>
+<span class="nc" id="L98">                .size(incidents.getSize())</span>
+<span class="nc" id="L99">                .totalElements(incidents.getTotalElements())</span>
+<span class="nc" id="L100">                .totalPages(incidents.getTotalPages())</span>
+<span class="nc" id="L101">                .last(incidents.isLast())</span>
+<span class="nc" id="L102">                .first(incidents.isFirst())</span>
+<span class="nc" id="L103">                .empty(incidents.isEmpty())</span>
+<span class="nc" id="L104">                .build();</span>
+
+<span class="nc" id="L106">        return ResponseEntity.ok(ApiResponse.builder()</span>
+<span class="nc" id="L107">                .success(true)</span>
+<span class="nc" id="L108">                .message(&quot;Incidents retrieved successfully&quot;)</span>
+<span class="nc" id="L109">                .data(pageResponse)</span>
+<span class="nc" id="L110">                .build());</span>
+    }
+
+    @PutMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('OPERATOR', 'SUPPORT', 'ADMIN')&quot;)
+    @Operation(
+            summary = &quot;Update incident&quot;,
+            description = &quot;Update incident details such as title, description, priority, or status&quot;,
+            security = @SecurityRequirement(name = &quot;bearerAuth&quot;)
+    )
+    public ResponseEntity&lt;ApiResponse&gt; updateIncident(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateIncidentRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+<span class="nc" id="L125">        UUID userId = extractUserId(userDetails);</span>
+<span class="nc" id="L126">        IncidentResponse incident = incidentService.updateIncident(id, request, userId);</span>
+
+<span class="nc" id="L128">        return ResponseEntity.ok(ApiResponse.builder()</span>
+<span class="nc" id="L129">                .success(true)</span>
+<span class="nc" id="L130">                .message(&quot;Incident updated successfully&quot;)</span>
+<span class="nc" id="L131">                .data(incident)</span>
+<span class="nc" id="L132">                .build());</span>
+    }
+
+    @PostMapping(&quot;/{id}/assign&quot;)
+    @PreAuthorize(&quot;hasAnyRole('SUPPORT', 'ADMIN')&quot;)
+    @Operation(
+            summary = &quot;Assign incident to user&quot;,
+            description = &quot;Assign an incident to a support user for resolution. Available to SUPPORT and ADMIN roles.&quot;,
+            security = @SecurityRequirement(name = &quot;bearerAuth&quot;)
+    )
+    public ResponseEntity&lt;ApiResponse&gt; assignIncident(
+            @PathVariable UUID id,
+            @Valid @RequestBody AssignIncidentRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+<span class="nc" id="L147">        UUID userId = extractUserId(userDetails);</span>
+<span class="nc" id="L148">        IncidentResponse incident = incidentService.assignIncident(id, request, userId);</span>
+
+<span class="nc" id="L150">        return ResponseEntity.ok(ApiResponse.builder()</span>
+<span class="nc" id="L151">                .success(true)</span>
+<span class="nc" id="L152">                .message(&quot;Incident assigned successfully&quot;)</span>
+<span class="nc" id="L153">                .data(incident)</span>
+<span class="nc" id="L154">                .build());</span>
+    }
+
+    @PutMapping(&quot;/{id}/status&quot;)
+    @PreAuthorize(&quot;hasAnyRole('SUPPORT', 'ADMIN')&quot;)
+    @Operation(
+            summary = &quot;Change incident status&quot;,
+            description = &quot;Update incident status (OPEN, IN_PROGRESS, RESOLVED, CLOSED). Available to SUPPORT and ADMIN roles.&quot;,
+            security = @SecurityRequirement(name = &quot;bearerAuth&quot;)
+    )
+    public ResponseEntity&lt;ApiResponse&gt; changeStatus(
+            @PathVariable UUID id,
+            @RequestParam IncidentStatus status,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+<span class="nc" id="L169">        UUID userId = extractUserId(userDetails);</span>
+<span class="nc" id="L170">        IncidentResponse incident = incidentService.changeStatus(id, status, userId);</span>
+
+<span class="nc" id="L172">        return ResponseEntity.ok(ApiResponse.builder()</span>
+<span class="nc" id="L173">                .success(true)</span>
+<span class="nc" id="L174">                .message(&quot;Incident status changed successfully&quot;)</span>
+<span class="nc" id="L175">                .data(incident)</span>
+<span class="nc" id="L176">                .build());</span>
+    }
+
+    @GetMapping(&quot;/my&quot;)
+    @PreAuthorize(&quot;isAuthenticated()&quot;)
+    @Operation(
+            summary = &quot;Get my incidents&quot;,
+            description = &quot;Retrieve all incidents reported by the current user&quot;,
+            security = @SecurityRequirement(name = &quot;bearerAuth&quot;)
+    )
+    public ResponseEntity&lt;ApiResponse&gt; getMyIncidents(
+            @RequestParam(defaultValue = &quot;0&quot;) int page,
+            @RequestParam(defaultValue = &quot;20&quot;) int size,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+<span class="nc" id="L191">        UUID userId = extractUserId(userDetails);</span>
+<span class="nc" id="L192">        Pageable pageable = PageRequest.of(page, size, Sort.by(&quot;createdAt&quot;).descending());</span>
+
+<span class="nc" id="L194">        Page&lt;IncidentResponse&gt; incidents = incidentService.getIncidentsByReportedBy(userId, pageable);</span>
+
+<span class="nc" id="L196">        PageResponse&lt;IncidentResponse&gt; pageResponse = PageResponse.&lt;IncidentResponse&gt;builder()</span>
+<span class="nc" id="L197">                .content(incidents.getContent())</span>
+<span class="nc" id="L198">                .page(incidents.getNumber())</span>
+<span class="nc" id="L199">                .size(incidents.getSize())</span>
+<span class="nc" id="L200">                .totalElements(incidents.getTotalElements())</span>
+<span class="nc" id="L201">                .totalPages(incidents.getTotalPages())</span>
+<span class="nc" id="L202">                .last(incidents.isLast())</span>
+<span class="nc" id="L203">                .first(incidents.isFirst())</span>
+<span class="nc" id="L204">                .empty(incidents.isEmpty())</span>
+<span class="nc" id="L205">                .build();</span>
+
+<span class="nc" id="L207">        return ResponseEntity.ok(ApiResponse.builder()</span>
+<span class="nc" id="L208">                .success(true)</span>
+<span class="nc" id="L209">                .message(&quot;My incidents retrieved successfully&quot;)</span>
+<span class="nc" id="L210">                .data(pageResponse)</span>
+<span class="nc" id="L211">                .build());</span>
+    }
+
+    @GetMapping(&quot;/assigned&quot;)
+    @PreAuthorize(&quot;hasAnyRole('SUPPORT', 'ADMIN')&quot;)
+    @Operation(
+            summary = &quot;Get assigned incidents&quot;,
+            description = &quot;Retrieve all incidents assigned to the current user. Available to SUPPORT and ADMIN roles.&quot;,
+            security = @SecurityRequirement(name = &quot;bearerAuth&quot;)
+    )
+    public ResponseEntity&lt;ApiResponse&gt; getAssignedIncidents(
+            @RequestParam(defaultValue = &quot;0&quot;) int page,
+            @RequestParam(defaultValue = &quot;20&quot;) int size,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+<span class="nc" id="L226">        UUID userId = extractUserId(userDetails);</span>
+<span class="nc" id="L227">        Pageable pageable = PageRequest.of(page, size, Sort.by(&quot;createdAt&quot;).descending());</span>
+
+<span class="nc" id="L229">        Page&lt;IncidentResponse&gt; incidents = incidentService.getIncidentsByAssignedTo(userId, pageable);</span>
+
+<span class="nc" id="L231">        PageResponse&lt;IncidentResponse&gt; pageResponse = PageResponse.&lt;IncidentResponse&gt;builder()</span>
+<span class="nc" id="L232">                .content(incidents.getContent())</span>
+<span class="nc" id="L233">                .page(incidents.getNumber())</span>
+<span class="nc" id="L234">                .size(incidents.getSize())</span>
+<span class="nc" id="L235">                .totalElements(incidents.getTotalElements())</span>
+<span class="nc" id="L236">                .totalPages(incidents.getTotalPages())</span>
+<span class="nc" id="L237">                .last(incidents.isLast())</span>
+<span class="nc" id="L238">                .first(incidents.isFirst())</span>
+<span class="nc" id="L239">                .empty(incidents.isEmpty())</span>
+<span class="nc" id="L240">                .build();</span>
+
+<span class="nc" id="L242">        return ResponseEntity.ok(ApiResponse.builder()</span>
+<span class="nc" id="L243">                .success(true)</span>
+<span class="nc" id="L244">                .message(&quot;Assigned incidents retrieved successfully&quot;)</span>
+<span class="nc" id="L245">                .data(pageResponse)</span>
+<span class="nc" id="L246">                .build());</span>
+    }
+
+    @GetMapping(&quot;/status/{status}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('SUPPORT', 'ADMIN')&quot;)
+    @Operation(
+            summary = &quot;Get incidents by status&quot;,
+            description = &quot;Filter incidents by status (OPEN, IN_PROGRESS, RESOLVED, CLOSED). Available to SUPPORT and ADMIN roles.&quot;,
+            security = @SecurityRequirement(name = &quot;bearerAuth&quot;)
+    )
+    public ResponseEntity&lt;ApiResponse&gt; getIncidentsByStatus(
+            @PathVariable IncidentStatus status,
+            @RequestParam(defaultValue = &quot;0&quot;) int page,
+            @RequestParam(defaultValue = &quot;20&quot;) int size) {
+
+<span class="nc" id="L261">        Pageable pageable = PageRequest.of(page, size, Sort.by(&quot;createdAt&quot;).descending());</span>
+<span class="nc" id="L262">        Page&lt;IncidentResponse&gt; incidents = incidentService.getIncidentsByStatus(status, pageable);</span>
+
+<span class="nc" id="L264">        PageResponse&lt;IncidentResponse&gt; pageResponse = PageResponse.&lt;IncidentResponse&gt;builder()</span>
+<span class="nc" id="L265">                .content(incidents.getContent())</span>
+<span class="nc" id="L266">                .page(incidents.getNumber())</span>
+<span class="nc" id="L267">                .size(incidents.getSize())</span>
+<span class="nc" id="L268">                .totalElements(incidents.getTotalElements())</span>
+<span class="nc" id="L269">                .totalPages(incidents.getTotalPages())</span>
+<span class="nc" id="L270">                .last(incidents.isLast())</span>
+<span class="nc" id="L271">                .first(incidents.isFirst())</span>
+<span class="nc" id="L272">                .empty(incidents.isEmpty())</span>
+<span class="nc" id="L273">                .build();</span>
+
+<span class="nc" id="L275">        return ResponseEntity.ok(ApiResponse.builder()</span>
+<span class="nc" id="L276">                .success(true)</span>
+<span class="nc" id="L277">                .message(&quot;Incidents retrieved successfully&quot;)</span>
+<span class="nc" id="L278">                .data(pageResponse)</span>
+<span class="nc" id="L279">                .build());</span>
+    }
+
+    private UUID extractUserId(UserDetails userDetails) {
+        // Assuming the username is the userId (UUID as string)
+<span class="nc" id="L284">        return UUID.fromString(userDetails.getUsername());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span>Generated on 2026-01-14T18:48:44Z</div></body></html>

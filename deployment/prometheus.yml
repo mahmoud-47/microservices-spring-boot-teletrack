@@ -1,0 +1,33 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'spring-services'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets:
+          - api-gateway:8080
+          - user-service:8081
+          - incident-service:8082
+          - notification-service:8083
+          - reporting-service:8084
+
+#scrape_configs:
+#  - job_name: 'teletrack-apps'
+#    metrics_path: '/actuator/prometheus'
+#    static_configs:
+#      - targets: ['host.docker.internal:8080']
+#        labels:
+#          application: 'api-gateway'
+#      - targets: ['host.docker.internal:8081']
+#        labels:
+#          application: 'user-service'
+#      - targets: ['host.docker.internal:8082']
+#        labels:
+#          application: 'incident-service'
+#      - targets: ['host.docker.internal:8083']
+#        labels:
+#          application: 'notification-service'
+#      - targets: ['host.docker.internal:8084']
+#        labels:
+#          application: 'reporting-service'
