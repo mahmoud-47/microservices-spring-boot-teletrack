@@ -226,12 +226,25 @@
 			<artifactId>ApacheJMeter_core</artifactId>
 			<version>5.6.2</version>
 			<scope>test</scope>
+			<exclusions>
+				<!-- Exclude Groovy 3.x; REST Assured already provides Groovy 4.x -->
+				<exclusion>
+					<groupId>org.codehaus.groovy</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.jmeter</groupId>
 			<artifactId>ApacheJMeter_java</artifactId>
 			<version>5.6.2</version>
 			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.codehaus.groovy</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 	</dependencies>
 

@@ -4,6 +4,7 @@ import com.teletrack.commonutils.exception.BadRequestException;
 import com.teletrack.commonutils.exception.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
@@ -131,6 +132,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<?> handleGlobalException(
             Exception ex,
             WebRequest request) {
+
+        // Let Spring Security's ExceptionTranslationFilter handle AccessDeniedException
+        // so it returns a proper 403 instead of being swallowed here as 500
+        if (ex instanceof AccessDeniedException accessDeniedException) {
+            throw accessDeniedException;
+        }
 
         log.error("Unexpected error occurred: ", ex);
 
