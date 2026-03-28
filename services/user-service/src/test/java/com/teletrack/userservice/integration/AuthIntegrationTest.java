@@ -159,11 +159,12 @@ class AuthIntegrationTest extends BaseIntegrationTest {
                 .when().post("/auth/register")
                 .then().statusCode(200);
 
-        // User is active=false (not yet email-verified) → login must fail
+        // User is active=false (not yet email-verified) → Spring Security's DaoAuthenticationProvider
+        // throws DisabledException before login() method can throw BadRequestException → 401
         given().contentType(ContentType.JSON)
                 .body(String.format("{\"email\":\"%s\",\"password\":\"Test@1234\"}", email))
                 .when().post("/auth/login")
-                .then().statusCode(400)
+                .then().statusCode(401)
                 .body("success", is(false));
     }
 

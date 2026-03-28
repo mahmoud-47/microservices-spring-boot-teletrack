@@ -73,7 +73,10 @@ public class SecurityConfig {
                                 // Actuator endpoints
                                 "/actuator/**",
                                 "/actuator/health",
-                                "/actuator/info"
+                                "/actuator/info",
+
+                                // Allow Tomcat error dispatch
+                                "/error"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

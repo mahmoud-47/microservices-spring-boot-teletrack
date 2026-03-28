@@ -122,8 +122,8 @@ class UserServiceContractTest extends BaseIntegrationTest {
                 .body("firstName", is("Contract"))
                 .body("lastName", is("User"))
                 .body("role", is("SUPPORT"))
-                .body("isActive", is(true))
-                .body("isApproved", is(true));
+                .body("active", is(true))
+                .body("approved", is(true));
     }
 
     @Test

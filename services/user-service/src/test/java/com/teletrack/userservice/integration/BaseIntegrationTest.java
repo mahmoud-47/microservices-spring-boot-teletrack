@@ -31,12 +31,16 @@ import static io.restassured.RestAssured.given;
         "spring.security.oauth2.client.registration.google.client-id=test",
         "spring.security.oauth2.client.registration.google.client-secret=test",
         "spring.security.oauth2.client.registration.google.scope=openid,email,profile",
+        "spring.liquibase.change-log=classpath:/db/changelog/db.changelog-master.xml",
+        "spring.autoconfigure.exclude=org.springframework.boot.actuate.autoconfigure.logging.OpenTelemetryLoggingAutoConfiguration",
         "jwt.secret=dGVzdHNlY3JldGtleXRlc3RzZWNyZXRrZXl0ZXN0c2VjcmV0a2V5dGVzdA==",
         "jwt.access-token.expiration=900000",
         "jwt.refresh-token.expiration=604800000",
         "service.api-key.incident-service=test-service-key-secret",
         "app.base-url=http://localhost:8080",
-        "app.frontend.url=http://localhost:3000"
+        "app.frontend.url=http://localhost:3000",
+        "tracing.url=http://localhost:4317",
+        "management.tracing.enabled=false"
 })
 public abstract class BaseIntegrationTest {
 
