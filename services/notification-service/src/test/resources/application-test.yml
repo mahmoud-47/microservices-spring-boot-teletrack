@@ -1,0 +1,28 @@
+spring:
+  config:
+    import: ""
+  cloud:
+    config:
+      enabled: false
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration
+      - org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration
+      - org.springframework.boot.autoconfigure.mail.MailSenderValidatorAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.logging.OpenTelemetryLoggingAutoConfiguration
+  kafka:
+    consumer:
+      group-id: notification-service-test
+
+eureka:
+  client:
+    enabled: false
+
+tracing:
+  url: http://localhost:4317
+
+management:
+  tracing:
+    enabled: false
