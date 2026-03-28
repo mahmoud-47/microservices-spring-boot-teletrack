@@ -1,0 +1,30 @@
+spring:
+  config:
+    import: ""
+  cloud:
+    config:
+      enabled: false
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.actuate.autoconfigure.logging.OpenTelemetryLoggingAutoConfiguration
+  kafka:
+    consumer:
+      group-id: reporting-service-group
+
+eureka:
+  client:
+    enabled: false
+
+jwt:
+  secret: dGVzdHNlY3JldGtleXRlc3RzZWNyZXRrZXl0ZXN0c2VjcmV0a2V5dGVzdA==
+
+tracing:
+  url: http://localhost:4317
+
+management:
+  tracing:
+    enabled: false
+
+ai:
+  service:
+    url: http://localhost:9999
