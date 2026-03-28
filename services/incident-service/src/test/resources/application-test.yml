@@ -1,0 +1,29 @@
+spring:
+  config:
+    import: ""
+  cloud:
+    config:
+      enabled: false
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.actuate.autoconfigure.logging.OpenTelemetryLoggingAutoConfiguration
+  liquibase:
+    change-log: classpath:/db/changelog/db.changelog-master.xml
+
+eureka:
+  client:
+    enabled: false
+
+jwt:
+  secret: dGVzdHNlY3JldGtleXRlc3RzZWNyZXRrZXl0ZXN0c2VjcmV0a2V5dGVzdA==
+
+tracing:
+  url: http://localhost:4317
+
+management:
+  tracing:
+    enabled: false
+
+service:
+  api-key:
+    incident-service: test-service-key-secret

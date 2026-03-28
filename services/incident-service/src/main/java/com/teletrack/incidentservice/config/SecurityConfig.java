@@ -26,6 +26,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 // Public auth endpoints
                                 "/incidents/hello",
+                                "/error",
+                                "/error/**",
 
                                 // Swagger/OpenAPI endpoints
                                 "/v3/api-docs/**",

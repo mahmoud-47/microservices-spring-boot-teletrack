@@ -5,6 +5,7 @@ import com.teletrack.commonutils.exception.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
@@ -131,6 +132,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<?> handleGlobalException(
             Exception ex,
             WebRequest request) {
+
+        if (ex instanceof AccessDeniedException e) { throw e; }
 
         log.error("Unexpected error occurred: ", ex);
 
