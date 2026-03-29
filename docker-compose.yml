@@ -209,6 +209,7 @@ services:
       interval: 15s
       timeout: 10s
       retries: 8
+      start_period: 60s
 
   # ─────────────────────────────────────────────
   # CONFIG SERVER (depends on discovery)
@@ -233,6 +234,7 @@ services:
       interval: 15s
       timeout: 10s
       retries: 8
+      start_period: 60s
 
   # ─────────────────────────────────────────────
   # AI SERVICE (Python — no Eureka/Config)
@@ -304,6 +306,7 @@ services:
       interval: 15s
       timeout: 10s
       retries: 8
+      start_period: 120s
 
   incident-service:
     image: teletrack-ms-incident-service
@@ -355,6 +358,7 @@ services:
       interval: 15s
       timeout: 10s
       retries: 8
+      start_period: 120s
 
   notification-service:
     image: teletrack-ms-notification-service
@@ -405,6 +409,7 @@ services:
       interval: 15s
       timeout: 10s
       retries: 8
+      start_period: 120s
 
   reporting-service:
     image: teletrack-ms-reporting-service
@@ -452,6 +457,7 @@ services:
       interval: 15s
       timeout: 10s
       retries: 8
+      start_period: 120s
 
   # ─────────────────────────────────────────────
   # API GATEWAY (last — depends on everything)
