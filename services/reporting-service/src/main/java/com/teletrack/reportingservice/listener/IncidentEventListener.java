@@ -24,7 +24,7 @@ public class IncidentEventListener {
 
     @KafkaListener(topics = "incident.created", groupId = "reporting-service-group")
     @CacheEvict(value = {"incident-summary", "trend-report"}, allEntries = true)
-    public void handleIncidentCreated(String message) throws JsonProcessingException {
+    public void handleIncidentCreated(String message) {
         IncidentCreatedEvent event = parse(message, IncidentCreatedEvent.class);
         if (event == null) return;
 
@@ -55,7 +55,7 @@ public class IncidentEventListener {
 
     @KafkaListener(topics = "incident.assigned", groupId = "reporting-service-group")
     @CacheEvict(value = {"incident-summary", "user-performance"}, allEntries = true)
-    public void handleIncidentAssigned(String message) throws JsonProcessingException {
+    public void handleIncidentAssigned(String message) {
         IncidentAssignedEvent event = parse(message, IncidentAssignedEvent.class);
         if (event == null) return;
 
@@ -92,7 +92,7 @@ public class IncidentEventListener {
 
     @KafkaListener(topics = "incident.status.changed", groupId = "reporting-service-group")
     @CacheEvict(value = {"incident-summary", "trend-report"}, allEntries = true)
-    public void handleStatusChanged(String message) throws JsonProcessingException {
+    public void handleStatusChanged(String message) {
         IncidentStatusChangedEvent event = parse(message, IncidentStatusChangedEvent.class);
         if (event == null) return;
 
@@ -130,7 +130,7 @@ public class IncidentEventListener {
 
     @KafkaListener(topics = "incident.resolved", groupId = "reporting-service-group")
     @CacheEvict(value = {"incident-summary", "user-performance"}, allEntries = true)
-    public void handleIncidentResolved(String message) throws JsonProcessingException {
+    public void handleIncidentResolved(String message) {
         IncidentResolvedEvent event = parse(message, IncidentResolvedEvent.class);
         if (event == null) return;
 
@@ -163,7 +163,7 @@ public class IncidentEventListener {
 
     @KafkaListener(topics = "incident.closed", groupId = "reporting-service-group")
     @CacheEvict(value = {"incident-summary"}, allEntries = true)
-    public void handleIncidentClosed(String message) throws JsonProcessingException {
+    public void handleIncidentClosed(String message) {
         IncidentClosedEvent event = parse(message, IncidentClosedEvent.class);
         if (event == null) return;
 

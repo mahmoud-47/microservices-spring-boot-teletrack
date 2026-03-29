@@ -1,28 +1,7 @@
+# change 1
+
 spring:
   application:
     name: notification-service
   config:
     import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
-  datasource:
-    hikari:
-      maximum-pool-size: ${HIKARI_MAX_POOL_SIZE:10}
-      minimum-idle: ${HIKARI_MIN_IDLE:2}
-      idle-timeout: ${HIKARI_IDLE_TIMEOUT:600000}
-      connection-timeout: ${HIKARI_CONNECTION_TIMEOUT:30000}
-      max-lifetime: ${HIKARI_MAX_LIFETIME:1800000}
-      leak-detection-threshold: ${HIKARI_LEAK_DETECTION_THRESHOLD:60000}
-  task:
-    execution:
-      pool:
-        core-size: ${EXECUTOR_CORE_SIZE:4}
-        max-size: ${EXECUTOR_MAX_SIZE:16}
-        queue-capacity: ${EXECUTOR_QUEUE_CAPACITY:100}
-        keep-alive: ${EXECUTOR_KEEP_ALIVE:60s}
-
-server:
-  tomcat:
-    threads:
-      max: ${TOMCAT_MAX_THREADS:200}
-      min-spare: ${TOMCAT_MIN_SPARE_THREADS:10}
-    accept-count: ${TOMCAT_ACCEPT_COUNT:100}
-    max-connections: ${TOMCAT_MAX_CONNECTIONS:8192}
