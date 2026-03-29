@@ -15,6 +15,8 @@ public interface IncidentReportRepository extends MongoRepository<IncidentReport
 
     Optional<IncidentReport> findByIncidentId(UUID incidentId);
 
+    boolean existsByIncidentId(UUID incidentId);
+
     List<IncidentReport> findByStatus(String status);
 
     List<IncidentReport> findByAssignedTo(UUID assignedTo);

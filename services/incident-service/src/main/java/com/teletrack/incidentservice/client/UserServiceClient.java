@@ -2,7 +2,6 @@ package com.teletrack.incidentservice.client;
 
 import com.teletrack.commonutils.dto.response.UserResponse;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
@@ -17,7 +16,7 @@ import java.util.UUID;
  * 2. Inject UserServiceClient where needed
  * 3. Call methods like: userServiceClient.validateUser(userId)
  */
-@FeignClient(name = "user-service", path = "/users")
+@FeignClient(name = "user-service", path = "/users", fallbackFactory = UserServiceClientFallbackFactory.class)
 public interface UserServiceClient {
 
     @GetMapping("/validate/{id}")
