@@ -1,0 +1,23 @@
+spring:
+  config:
+    import: "optional:configserver:"
+  cloud:
+    config:
+      enabled: false
+    gateway:
+      enabled: false
+
+eureka:
+  client:
+    enabled: false
+
+tracing:
+  url: http://localhost:4317
+
+management:
+  tracing:
+    enabled: false
+  metrics:
+    export:
+      prometheus:
+        enabled: false
