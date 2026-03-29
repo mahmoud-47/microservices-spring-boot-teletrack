@@ -108,49 +108,49 @@ jobs:
       - name: Build Gateway
         if: needs.detect-changes.outputs.gateway == 'true' || needs.detect-changes.outputs.common == 'true'
         run: |
-          cd gateway/api-gateway && mvn clean package -DskipTests && cd ../..
+          cd gateway/api-gateway && mvn clean package && cd ../..
           docker build -t mahmoudmhd47/teletrack-ms-gateway:latest ./gateway/api-gateway
           docker push mahmoudmhd47/teletrack-ms-gateway:latest
 
       - name: Build Discovery Service
         if: needs.detect-changes.outputs.discovery == 'true' || needs.detect-changes.outputs.common == 'true'
         run: |
-          cd discovery/discovery-service && mvn clean package -DskipTests && cd ../..
+          cd discovery/discovery-service && mvn clean package && cd ../..
           docker build -t mahmoudmhd47/teletrack-ms-discovery:latest ./discovery/discovery-service
           docker push mahmoudmhd47/teletrack-ms-discovery:latest
 
       - name: Build Config Service
         if: needs.detect-changes.outputs.config == 'true' || needs.detect-changes.outputs.common == 'true'
         run: |
-          cd config/config-service && mvn clean package -DskipTests && cd ../..
+          cd config/config-service && mvn clean package && cd ../..
           docker build -t mahmoudmhd47/teletrack-ms-config:latest ./config/config-service
           docker push mahmoudmhd47/teletrack-ms-config:latest
 
       - name: Build User Service
         if: needs.detect-changes.outputs.user == 'true' || needs.detect-changes.outputs.common == 'true'
         run: |
-          cd services/user-service && mvn clean package -DskipTests && cd ../..
+          cd services/user-service && mvn clean package && cd ../..
           docker build -t mahmoudmhd47/teletrack-ms-user-service:latest ./services/user-service
           docker push mahmoudmhd47/teletrack-ms-user-service:latest
 
       - name: Build Incident Service
         if: needs.detect-changes.outputs.incident == 'true' || needs.detect-changes.outputs.common == 'true'
         run: |
-          cd services/incident-service && mvn clean package -DskipTests && cd ../..
+          cd services/incident-service && mvn clean package && cd ../..
           docker build -t mahmoudmhd47/teletrack-ms-incident-service:latest ./services/incident-service
           docker push mahmoudmhd47/teletrack-ms-incident-service:latest
 
       - name: Build Notification Service
         if: needs.detect-changes.outputs.notification == 'true' || needs.detect-changes.outputs.common == 'true'
         run: |
-          cd services/notification-service && mvn clean package -DskipTests && cd ../..
+          cd services/notification-service && mvn clean package && cd ../..
           docker build -t mahmoudmhd47/teletrack-ms-notification-service:latest ./services/notification-service
           docker push mahmoudmhd47/teletrack-ms-notification-service:latest
 
       - name: Build Reporting Service
         if: needs.detect-changes.outputs.reporting == 'true' || needs.detect-changes.outputs.common == 'true'
         run: |
-          cd services/reporting-service && mvn clean package -DskipTests && cd ../..
+          cd services/reporting-service && mvn clean package && cd ../..
           docker build -t mahmoudmhd47/teletrack-ms-reporting-service:latest ./services/reporting-service
           docker push mahmoudmhd47/teletrack-ms-reporting-service:latest
 
