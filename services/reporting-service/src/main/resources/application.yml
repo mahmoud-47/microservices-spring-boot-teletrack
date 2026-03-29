@@ -3,3 +3,18 @@ spring:
     name: reporting-service
   config:
     import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
+  task:
+    execution:
+      pool:
+        core-size: ${EXECUTOR_CORE_SIZE}
+        max-size: ${EXECUTOR_MAX_SIZE}
+        queue-capacity: ${EXECUTOR_QUEUE_CAPACITY}
+        keep-alive: ${EXECUTOR_KEEP_ALIVE}
+
+server:
+  tomcat:
+    threads:
+      max: ${TOMCAT_MAX_THREADS}
+      min-spare: ${TOMCAT_MIN_SPARE_THREADS}
+    accept-count: ${TOMCAT_ACCEPT_COUNT}
+    max-connections: ${TOMCAT_MAX_CONNECTIONS}

@@ -138,6 +138,12 @@
 			<artifactId>spring-cloud-starter-openfeign</artifactId>
 		</dependency>
 
+		<!-- Resilience4j Circuit Breaker (Feign integration) -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
+		</dependency>
+
 		<!-- Load Balancer (required for Feign with Eureka) -->
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>

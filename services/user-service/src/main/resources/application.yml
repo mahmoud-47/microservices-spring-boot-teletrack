@@ -3,3 +3,19 @@ spring:
     name: user-service
   config:
     import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
+  datasource:
+    hikari:
+      maximum-pool-size: ${HIKARI_MAX_POOL_SIZE}
+      minimum-idle: ${HIKARI_MIN_IDLE}
+      idle-timeout: ${HIKARI_IDLE_TIMEOUT}
+      connection-timeout: ${HIKARI_CONNECTION_TIMEOUT}
+      max-lifetime: ${HIKARI_MAX_LIFETIME}
+      leak-detection-threshold: ${HIKARI_LEAK_DETECTION_THRESHOLD}
+
+server:
+  tomcat:
+    threads:
+      max: ${TOMCAT_MAX_THREADS}
+      min-spare: ${TOMCAT_MIN_SPARE_THREADS}
+    accept-count: ${TOMCAT_ACCEPT_COUNT}
+    max-connections: ${TOMCAT_MAX_CONNECTIONS}
