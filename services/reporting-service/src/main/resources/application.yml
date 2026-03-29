@@ -6,15 +6,15 @@ spring:
   task:
     execution:
       pool:
-        core-size: ${EXECUTOR_CORE_SIZE}
-        max-size: ${EXECUTOR_MAX_SIZE}
-        queue-capacity: ${EXECUTOR_QUEUE_CAPACITY}
-        keep-alive: ${EXECUTOR_KEEP_ALIVE}
+        core-size: ${EXECUTOR_CORE_SIZE:4}
+        max-size: ${EXECUTOR_MAX_SIZE:16}
+        queue-capacity: ${EXECUTOR_QUEUE_CAPACITY:100}
+        keep-alive: ${EXECUTOR_KEEP_ALIVE:60s}
 
 server:
   tomcat:
     threads:
-      max: ${TOMCAT_MAX_THREADS}
-      min-spare: ${TOMCAT_MIN_SPARE_THREADS}
-    accept-count: ${TOMCAT_ACCEPT_COUNT}
-    max-connections: ${TOMCAT_MAX_CONNECTIONS}
+      max: ${TOMCAT_MAX_THREADS:200}
+      min-spare: ${TOMCAT_MIN_SPARE_THREADS:10}
+    accept-count: ${TOMCAT_ACCEPT_COUNT:100}
+    max-connections: ${TOMCAT_MAX_CONNECTIONS:8192}
