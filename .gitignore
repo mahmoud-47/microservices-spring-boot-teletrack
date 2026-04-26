@@ -1,3 +1,5 @@
 .env
 .idea/
 *.iml
+.claude/
+CLAUDE.md
