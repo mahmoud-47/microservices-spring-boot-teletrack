@@ -3,6 +3,8 @@ from openai import OpenAI
 import os
 from dotenv import load_dotenv
 
+# force to push
+
 # Load environment variables
 load_dotenv()
 
