@@ -3,3 +3,4 @@
 *.iml
 .claude/
 CLAUDE.md
+.terraform/
