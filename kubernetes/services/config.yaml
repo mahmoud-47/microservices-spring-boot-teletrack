@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: config-service
+  namespace: teletrack360
+spec:
+  selector:
+    app: config-service
+  ports:
+    - port: 8888
+      targetPort: 8888
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: config-service
+  namespace: teletrack360
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: config-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: config-service
+    spec:
+      initContainers:
+        - name: wait-for-discovery
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until wget -qO- http://discovery-service:8761/actuator/health 2>/dev/null | grep -q UP; do
+                echo "Waiting for discovery-service..."; sleep 5
+              done
+      containers:
+        - name: config-service
+          image: mahmoudmhd47/teletrack-ms-config:latest
+          imagePullPolicy: Always
+          env:
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              value: http://discovery-service:8761/eureka/
+            - name: TRACING_URL
+              value: http://jaeger:4317
+            - name: LOGSTASH_HOST
+              value: logstash
+            - name: LOGSTASH_PORT
+              value: "5000"
+          ports:
+            - containerPort: 8888
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi

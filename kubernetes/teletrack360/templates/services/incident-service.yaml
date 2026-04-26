@@ -1,0 +1,153 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: incident-service
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    app: incident-service
+  ports:
+    - port: 8082
+      targetPort: 8082
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: incident-service
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.services.incidentService.replicas }}
+  selector:
+    matchLabels:
+      app: incident-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: incident-service
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z postgres 5432; do
+                echo "Waiting for Postgres..."; sleep 2
+              done
+              echo "Postgres is ready"
+        - name: wait-for-config
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until wget -qO- http://config-service:8888/actuator/health 2>/dev/null | grep UP; do
+                echo "Waiting for config-service..."; sleep 5
+              done
+              echo "Config service is ready"
+      containers:
+        - name: incident-service
+          image: {{ .Values.services.incidentService.image }}:{{ .Values.services.incidentService.tag }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          envFrom:
+            - secretRef:
+                name: teletrack-secrets
+          env:
+            - name: SPRING_CONFIG_IMPORT
+              value: "configserver:http://config-service:8888"
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              value: "http://discovery-service:8761/eureka/"
+            - name: INCIDENT_DB_URL
+              value: "jdbc:postgresql://postgres:5432/incidents_db"
+            - name: INCIDENT_DB_USERNAME
+              value: {{ .Values.postgres.username | quote }}
+            - name: INCIDENT_DB_PASSWORD
+              value: {{ .Values.postgres.password | quote }}
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka:9092"
+            - name: TRACING_URL
+              value: "http://jaeger:4317"
+            - name: HIKARI_MAX_POOL_SIZE
+              value: {{ .Values.hikari.maxPoolSize | quote }}
+            - name: HIKARI_MIN_IDLE
+              value: {{ .Values.hikari.minIdle | quote }}
+            - name: HIKARI_IDLE_TIMEOUT
+              value: {{ .Values.hikari.idleTimeout | quote }}
+            - name: HIKARI_CONNECTION_TIMEOUT
+              value: {{ .Values.hikari.connectionTimeout | quote }}
+            - name: HIKARI_MAX_LIFETIME
+              value: {{ .Values.hikari.maxLifetime | quote }}
+            - name: HIKARI_LEAK_DETECTION_THRESHOLD
+              value: {{ .Values.hikari.leakDetectionThreshold | quote }}
+            - name: TOMCAT_MAX_THREADS
+              value: {{ .Values.tomcat.maxThreads | quote }}
+            - name: TOMCAT_MIN_SPARE_THREADS
+              value: {{ .Values.tomcat.minSpareThreads | quote }}
+            - name: TOMCAT_ACCEPT_COUNT
+              value: {{ .Values.tomcat.acceptCount | quote }}
+            - name: TOMCAT_MAX_CONNECTIONS
+              value: {{ .Values.tomcat.maxConnections | quote }}
+            - name: FEIGN_CB_ENABLED
+              value: {{ .Values.circuitBreaker.enabled | quote }}
+            - name: CB_SLIDING_WINDOW_SIZE
+              value: {{ .Values.circuitBreaker.slidingWindowSize | quote }}
+            - name: CB_MIN_CALLS
+              value: {{ .Values.circuitBreaker.minCalls | quote }}
+            - name: CB_FAILURE_RATE_THRESHOLD
+              value: {{ .Values.circuitBreaker.failureRateThreshold | quote }}
+            - name: CB_WAIT_DURATION_OPEN_STATE
+              value: {{ .Values.circuitBreaker.waitDurationOpenState | quote }}
+            - name: CB_HALF_OPEN_PERMITTED_CALLS
+              value: {{ .Values.circuitBreaker.halfOpenPermittedCalls | quote }}
+            - name: CB_SLOW_CALL_DURATION_THRESHOLD
+              value: {{ .Values.circuitBreaker.slowCallDurationThreshold | quote }}
+            - name: CB_SLOW_CALL_RATE_THRESHOLD
+              value: {{ .Values.circuitBreaker.slowCallRateThreshold | quote }}
+            - name: LOGSTASH_HOST
+              value: "logstash"
+            - name: LOGSTASH_PORT
+              value: "5000"
+          ports:
+            - containerPort: 8082
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8082
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8082
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8082
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: {{ .Values.spread.topologyKey }}
+          whenUnsatisfiable: {{ .Values.spread.whenUnsatisfiable }}
+          labelSelector:
+            matchLabels:
+              app: incident-service

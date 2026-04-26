@@ -1,0 +1,140 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# TeleTrack360 Helm Values  —  defaults are minikube-friendly
+# Override with values-aws.yaml for EKS deployment
+# ─────────────────────────────────────────────────────────────────────────────
+
+global:
+  # StorageClass: "standard" for minikube, "gp3" for AWS EKS
+  storageClass: standard
+
+# Pod topology spread — keeps replicas on different nodes/zones
+spread:
+  # kubernetes.io/hostname  → different nodes (minikube-safe)
+  # topology.kubernetes.io/zone → different AZs (AWS EKS)
+  topologyKey: kubernetes.io/hostname
+  # ScheduleAnyway → try to spread but don't block (safe for single-node minikube)
+  # DoNotSchedule  → hard requirement (use for AWS EKS)
+  whenUnsatisfiable: ScheduleAnyway
+
+images:
+  pullPolicy: IfNotPresent
+
+# ─── Application Services ─────────────────────────────────────────────────────
+services:
+  gateway:
+    image: mahmoudmhd47/teletrack-ms-gateway
+    tag: latest
+    replicas: 1
+  discovery:
+    image: mahmoudmhd47/teletrack-ms-discovery
+    tag: latest
+    replicas: 1
+  config:
+    image: mahmoudmhd47/teletrack-ms-config
+    tag: latest
+    replicas: 1
+  aiService:
+    image: mahmoudmhd47/teletrack-ms-ai-service
+    tag: latest
+    replicas: 1
+  userService:
+    image: mahmoudmhd47/teletrack-ms-user-service
+    tag: latest
+    replicas: 1
+  incidentService:
+    image: mahmoudmhd47/teletrack-ms-incident-service
+    tag: latest
+    replicas: 1
+  notificationService:
+    image: mahmoudmhd47/teletrack-ms-notification-service
+    tag: latest
+    replicas: 1
+  reportingService:
+    image: mahmoudmhd47/teletrack-ms-reporting-service
+    tag: latest
+    replicas: 1
+
+# ─── Infrastructure ───────────────────────────────────────────────────────────
+postgres:
+  username: postgres
+  password: postgres
+  storage: 5Gi
+
+mongo:
+  username: admin
+  password: admin
+  storage: 5Gi
+
+redis:
+  storage: 1Gi
+
+elasticsearch:
+  javaOpts: "-Xms512m -Xmx512m"
+  storage: 5Gi
+
+logstash:
+  javaOpts: "-Xms256m -Xmx256m"
+
+prometheus:
+  storage: 2Gi
+
+grafana:
+  adminPassword: admin
+  storage: 1Gi
+
+# ─── Application Secrets (pass via --set or -f values-secrets.yaml) ──────────
+# NEVER commit real values here
+secrets:
+  jwtSecret: ""
+  googleClientId: ""
+  googleClientSecret: ""
+  gatewayServiceKey: ""
+  incidentServiceApiKey: ""
+  mailUsername: ""
+  mailPassword: ""
+  openaiApiKey: ""
+
+# ─── Gateway Config ───────────────────────────────────────────────────────────
+gateway:
+  # Update to LoadBalancer DNS after deploy for OAuth2 to work
+  frontUrl: "http://localhost:3000"
+  backUrl: "http://api-gateway:8080"
+
+# ─── Mail ─────────────────────────────────────────────────────────────────────
+mail:
+  host: smtp.gmail.com
+  port: "587"
+
+# ─── Hikari Connection Pool (values in milliseconds) ─────────────────────────
+hikari:
+  maxPoolSize: "10"
+  minIdle: "5"
+  idleTimeout: "600000"
+  connectionTimeout: "30000"
+  maxLifetime: "1800000"
+  leakDetectionThreshold: "2000"
+
+# ─── Tomcat Thread Pool ───────────────────────────────────────────────────────
+tomcat:
+  maxThreads: "200"
+  minSpareThreads: "10"
+  acceptCount: "100"
+  maxConnections: "8192"
+
+# ─── Async Executor ───────────────────────────────────────────────────────────
+executor:
+  coreSize: "5"
+  maxSize: "20"
+  queueCapacity: "500"
+  keepAlive: "60s"
+
+# ─── Resilience4j Circuit Breaker (incident-service → user-service) ──────────
+circuitBreaker:
+  enabled: "true"
+  slidingWindowSize: "10"
+  minCalls: "5"
+  failureRateThreshold: "50"
+  waitDurationOpenState: "60s"
+  halfOpenPermittedCalls: "3"
+  slowCallDurationThreshold: "2s"
+  slowCallRateThreshold: "50"

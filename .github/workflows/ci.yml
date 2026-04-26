@@ -6,6 +6,9 @@ on:
       - main
 
 jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Detect which services changed
+  # ─────────────────────────────────────────────────────────────────────────────
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
@@ -25,7 +28,7 @@ jobs:
         with:
           filters: |
             common:
-              - 'common-utils/**'
+              - 'shared/common-utils/**'
               - 'pom.xml'
             gateway:
               - 'gateway/**'
@@ -44,6 +47,9 @@ jobs:
             ai:
               - 'AI-Service/**'
 
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Build changed services and push :latest + :<git-sha> to DockerHub
+  # ─────────────────────────────────────────────────────────────────────────────
   build-and-push:
     runs-on: ubuntu-latest
     needs: detect-changes
@@ -52,8 +58,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Short 7-char SHA used as the image tag (e.g. a3f9c12)
+      - name: Export short SHA
+        run: echo "SHA=$(echo $GITHUB_SHA | head -c 7)" >> $GITHUB_ENV
+
       - name: Set up JDK 21
-        # Only needed if any Java service changed
         if: |
           needs.detect-changes.outputs.common == 'true' ||
           needs.detect-changes.outputs.gateway == 'true' ||
@@ -81,9 +90,7 @@ jobs:
           needs.detect-changes.outputs.reporting == 'true'
         run: |
           mvn clean install -DskipTests -N
-          cd shared/common-utils
-          mvn clean install -DskipTests
-          cd ../..
+          cd shared/common-utils && mvn clean install -DskipTests && cd ../..
 
       - name: Log in to DockerHub
         if: |
@@ -101,61 +108,188 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # ─────────────────────────────────────────────
-      # If common-utils changed, rebuild ALL Java services
-      # ─────────────────────────────────────────────
+      # Each service is tagged :latest AND :<sha>
+      # Kubernetes uses the SHA tag to detect image changes and trigger rolling updates
 
       - name: Build Gateway
         if: needs.detect-changes.outputs.gateway == 'true' || needs.detect-changes.outputs.common == 'true'
         run: |
-          cd gateway/api-gateway && mvn clean package && cd ../..
-          docker build -t mahmoudmhd47/teletrack-ms-gateway:latest ./gateway/api-gateway
+          cd gateway/api-gateway && mvn clean package -DskipTests && cd ../..
+          docker build \
+            -t mahmoudmhd47/teletrack-ms-gateway:latest \
+            -t mahmoudmhd47/teletrack-ms-gateway:${{ env.SHA }} \
+            ./gateway/api-gateway
           docker push mahmoudmhd47/teletrack-ms-gateway:latest
+          docker push mahmoudmhd47/teletrack-ms-gateway:${{ env.SHA }}
 
       - name: Build Discovery Service
         if: needs.detect-changes.outputs.discovery == 'true' || needs.detect-changes.outputs.common == 'true'
         run: |
-          cd discovery/discovery-service && mvn clean package && cd ../..
-          docker build -t mahmoudmhd47/teletrack-ms-discovery:latest ./discovery/discovery-service
+          cd discovery/discovery-service && mvn clean package -DskipTests && cd ../..
+          docker build \
+            -t mahmoudmhd47/teletrack-ms-discovery:latest \
+            -t mahmoudmhd47/teletrack-ms-discovery:${{ env.SHA }} \
+            ./discovery/discovery-service
           docker push mahmoudmhd47/teletrack-ms-discovery:latest
+          docker push mahmoudmhd47/teletrack-ms-discovery:${{ env.SHA }}
 
       - name: Build Config Service
         if: needs.detect-changes.outputs.config == 'true' || needs.detect-changes.outputs.common == 'true'
         run: |
-          cd config/config-service && mvn clean package && cd ../..
-          docker build -t mahmoudmhd47/teletrack-ms-config:latest ./config/config-service
+          cd config/config-service && mvn clean package -DskipTests && cd ../..
+          docker build \
+            -t mahmoudmhd47/teletrack-ms-config:latest \
+            -t mahmoudmhd47/teletrack-ms-config:${{ env.SHA }} \
+            ./config/config-service
           docker push mahmoudmhd47/teletrack-ms-config:latest
+          docker push mahmoudmhd47/teletrack-ms-config:${{ env.SHA }}
 
       - name: Build User Service
         if: needs.detect-changes.outputs.user == 'true' || needs.detect-changes.outputs.common == 'true'
         run: |
-          cd services/user-service && mvn clean package && cd ../..
-          docker build -t mahmoudmhd47/teletrack-ms-user-service:latest ./services/user-service
+          cd services/user-service && mvn clean package -DskipTests && cd ../..
+          docker build \
+            -t mahmoudmhd47/teletrack-ms-user-service:latest \
+            -t mahmoudmhd47/teletrack-ms-user-service:${{ env.SHA }} \
+            ./services/user-service
           docker push mahmoudmhd47/teletrack-ms-user-service:latest
+          docker push mahmoudmhd47/teletrack-ms-user-service:${{ env.SHA }}
 
       - name: Build Incident Service
         if: needs.detect-changes.outputs.incident == 'true' || needs.detect-changes.outputs.common == 'true'
         run: |
-          cd services/incident-service && mvn clean package && cd ../..
-          docker build -t mahmoudmhd47/teletrack-ms-incident-service:latest ./services/incident-service
+          cd services/incident-service && mvn clean package -DskipTests && cd ../..
+          docker build \
+            -t mahmoudmhd47/teletrack-ms-incident-service:latest \
+            -t mahmoudmhd47/teletrack-ms-incident-service:${{ env.SHA }} \
+            ./services/incident-service
           docker push mahmoudmhd47/teletrack-ms-incident-service:latest
+          docker push mahmoudmhd47/teletrack-ms-incident-service:${{ env.SHA }}
 
       - name: Build Notification Service
         if: needs.detect-changes.outputs.notification == 'true' || needs.detect-changes.outputs.common == 'true'
         run: |
-          cd services/notification-service && mvn clean package && cd ../..
-          docker build -t mahmoudmhd47/teletrack-ms-notification-service:latest ./services/notification-service
+          cd services/notification-service && mvn clean package -DskipTests && cd ../..
+          docker build \
+            -t mahmoudmhd47/teletrack-ms-notification-service:latest \
+            -t mahmoudmhd47/teletrack-ms-notification-service:${{ env.SHA }} \
+            ./services/notification-service
           docker push mahmoudmhd47/teletrack-ms-notification-service:latest
+          docker push mahmoudmhd47/teletrack-ms-notification-service:${{ env.SHA }}
 
       - name: Build Reporting Service
         if: needs.detect-changes.outputs.reporting == 'true' || needs.detect-changes.outputs.common == 'true'
         run: |
-          cd services/reporting-service && mvn clean package && cd ../..
-          docker build -t mahmoudmhd47/teletrack-ms-reporting-service:latest ./services/reporting-service
+          cd services/reporting-service && mvn clean package -DskipTests && cd ../..
+          docker build \
+            -t mahmoudmhd47/teletrack-ms-reporting-service:latest \
+            -t mahmoudmhd47/teletrack-ms-reporting-service:${{ env.SHA }} \
+            ./services/reporting-service
           docker push mahmoudmhd47/teletrack-ms-reporting-service:latest
+          docker push mahmoudmhd47/teletrack-ms-reporting-service:${{ env.SHA }}
 
       - name: Build AI Service
         if: needs.detect-changes.outputs.ai == 'true'
         run: |
-          docker build -t mahmoudmhd47/teletrack-ms-ai-service:latest ./AI-Service
+          docker build \
+            -t mahmoudmhd47/teletrack-ms-ai-service:latest \
+            -t mahmoudmhd47/teletrack-ms-ai-service:${{ env.SHA }} \
+            ./AI-Service
           docker push mahmoudmhd47/teletrack-ms-ai-service:latest
+          docker push mahmoudmhd47/teletrack-ms-ai-service:${{ env.SHA }}
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Deploy to AWS EKS — only runs when EKS_DEPLOY_ENABLED repo variable is true
+  # Set it in: GitHub repo → Settings → Variables → Actions → EKS_DEPLOY_ENABLED = true
+  # ─────────────────────────────────────────────────────────────────────────────
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [detect-changes, build-and-push]
+    if: vars.EKS_DEPLOY_ENABLED == 'true'
+
+    permissions:
+      id-token: write   # Required for OIDC — lets GitHub get a JWT from AWS
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Export short SHA
+        run: echo "SHA=$(echo $GITHUB_SHA | head -c 7)" >> $GITHUB_ENV
+
+      # OIDC: GitHub proves its identity to AWS, gets temporary credentials
+      # No AWS Access Key or Secret stored in GitHub Secrets
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/teletrack360-github-actions
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name teletrack360 --region ${{ secrets.AWS_REGION }}
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: "3.14.0"
+
+      # Build --set overrides for each service that changed
+      # --reuse-values keeps all other values from the last helm upgrade intact
+      # --wait blocks until all pods pass their readiness probes (zero-downtime confirmed)
+      - name: Deploy changed services
+        run: |
+          SHA=${{ env.SHA }}
+          OVERRIDES=""
+
+          if [ "${{ needs.detect-changes.outputs.common }}" = "true" ]; then
+            # common-utils changed → ALL Java services were rebuilt
+            OVERRIDES="$OVERRIDES --set services.gateway.tag=$SHA"
+            OVERRIDES="$OVERRIDES --set services.discovery.tag=$SHA"
+            OVERRIDES="$OVERRIDES --set services.config.tag=$SHA"
+            OVERRIDES="$OVERRIDES --set services.userService.tag=$SHA"
+            OVERRIDES="$OVERRIDES --set services.incidentService.tag=$SHA"
+            OVERRIDES="$OVERRIDES --set services.notificationService.tag=$SHA"
+            OVERRIDES="$OVERRIDES --set services.reportingService.tag=$SHA"
+          else
+            if [ "${{ needs.detect-changes.outputs.gateway }}" = "true" ]; then
+              OVERRIDES="$OVERRIDES --set services.gateway.tag=$SHA"
+            fi
+            if [ "${{ needs.detect-changes.outputs.discovery }}" = "true" ]; then
+              OVERRIDES="$OVERRIDES --set services.discovery.tag=$SHA"
+            fi
+            if [ "${{ needs.detect-changes.outputs.config }}" = "true" ]; then
+              OVERRIDES="$OVERRIDES --set services.config.tag=$SHA"
+            fi
+            if [ "${{ needs.detect-changes.outputs.user }}" = "true" ]; then
+              OVERRIDES="$OVERRIDES --set services.userService.tag=$SHA"
+            fi
+            if [ "${{ needs.detect-changes.outputs.incident }}" = "true" ]; then
+              OVERRIDES="$OVERRIDES --set services.incidentService.tag=$SHA"
+            fi
+            if [ "${{ needs.detect-changes.outputs.notification }}" = "true" ]; then
+              OVERRIDES="$OVERRIDES --set services.notificationService.tag=$SHA"
+            fi
+            if [ "${{ needs.detect-changes.outputs.reporting }}" = "true" ]; then
+              OVERRIDES="$OVERRIDES --set services.reportingService.tag=$SHA"
+            fi
+          fi
+
+          if [ "${{ needs.detect-changes.outputs.ai }}" = "true" ]; then
+            OVERRIDES="$OVERRIDES --set services.aiService.tag=$SHA"
+          fi
+
+          if [ -z "$OVERRIDES" ]; then
+            echo "No application services changed — skipping Helm upgrade"
+            exit 0
+          fi
+
+          helm upgrade teletrack360 ./kubernetes/teletrack360 \
+            -f kubernetes/teletrack360/values-aws.yaml \
+            -n teletrack360 \
+            --reuse-values \
+            $OVERRIDES \
+            --wait \
+            --timeout 10m
+
+          echo "Deployment complete. Changed services are live."

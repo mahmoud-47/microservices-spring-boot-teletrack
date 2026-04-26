@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: init-db-sql
+  namespace: {{ .Release.Namespace }}
+data:
+  init-db.sql: |
+    CREATE DATABASE users_db;
+    CREATE DATABASE incidents_db;
+    CREATE DATABASE notification_db;
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logstash-config
+  namespace: {{ .Release.Namespace }}
+data:
+  logstash.conf: |
+    input {
+      tcp {
+        port => 5000
+        codec => json_lines
+      }
+    }
+
+    filter {
+      date {
+        match => ["@timestamp", "ISO8601"]
+        target => "@timestamp"
+      }
+      mutate {
+        remove_field => ["host", "port"]
+      }
+    }
+
+    output {
+      elasticsearch {
+        hosts => ["http://elasticsearch:9200"]
+        index => "teletrack-%{[service]}-%{+YYYY.MM.dd}"
+      }
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: {{ .Release.Namespace }}
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+
+    scrape_configs:
+      - job_name: 'spring-services'
+        metrics_path: '/actuator/prometheus'
+        static_configs:
+          - targets:
+              - api-gateway:8080
+              - user-service:8081
+              - incident-service:8082
+              - notification-service:8083
+              - reporting-service:8084

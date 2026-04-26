@@ -197,8 +197,8 @@ services:
   # ─────────────────────────────────────────────
 
   discovery-service:
-    image: teletrack-ms-discovery
-    pull_policy: never
+    build:
+      context: ./discovery/discovery-service
     container_name: teletrack-discovery
     environment:
       TRACING_URL: http://jaeger:4317
@@ -218,8 +218,8 @@ services:
   # ─────────────────────────────────────────────
 
   config-service:
-    image: teletrack-ms-config
-    pull_policy: never
+    build:
+      context: ./config/config-service
     container_name: teletrack-config
     depends_on:
       discovery-service:
@@ -243,8 +243,8 @@ services:
   # ─────────────────────────────────────────────
 
   ai-service:
-    image: teletrack-ms-ai-service
-    pull_policy: never
+    build:
+      context: ./AI-Service
     container_name: teletrack-ai-service
     ports:
       - "8085:8085"
@@ -264,8 +264,8 @@ services:
   # ─────────────────────────────────────────────
 
   user-service:
-    image: teletrack-ms-user-service
-    pull_policy: never
+    build:
+      context: ./services/user-service
     container_name: teletrack-user-service
     depends_on:
       postgres:
@@ -311,8 +311,8 @@ services:
       start_period: 120s
 
   incident-service:
-    image: teletrack-ms-incident-service
-    pull_policy: never
+    build:
+      context: ./services/incident-service
     container_name: teletrack-incident-service
     depends_on:
       postgres:
@@ -363,8 +363,8 @@ services:
       start_period: 120s
 
   notification-service:
-    image: teletrack-ms-notification-service
-    pull_policy: never
+    build:
+      context: ./services/notification-service
     container_name: teletrack-notification-service
     depends_on:
       postgres:
@@ -414,8 +414,8 @@ services:
       start_period: 120s
 
   reporting-service:
-    image: teletrack-ms-reporting-service
-    pull_policy: never
+    build:
+      context: ./services/reporting-service
     container_name: teletrack-reporting-service
     depends_on:
       mongo:
@@ -466,8 +466,8 @@ services:
   # ─────────────────────────────────────────────
 
   api-gateway:
-    image: teletrack-ms-gateway
-    pull_policy: never
+    build:
+      context: ./gateway/api-gateway
     container_name: teletrack-gateway
     depends_on:
       redis:

@@ -1,0 +1,95 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: config-service
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    app: config-service
+  ports:
+    - port: 8888
+      targetPort: 8888
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: config-service
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.services.config.replicas }}
+  selector:
+    matchLabels:
+      app: config-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: config-service
+    spec:
+      initContainers:
+        - name: wait-for-discovery
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until wget -qO- http://discovery-service:8761/actuator/health 2>/dev/null | grep UP; do
+                echo "Waiting for discovery-service..."; sleep 5
+              done
+              echo "Discovery service is ready"
+      containers:
+        - name: config-service
+          image: {{ .Values.services.config.image }}:{{ .Values.services.config.tag }}
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          env:
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              value: "http://discovery-service:8761/eureka/"
+            - name: TRACING_URL
+              value: "http://jaeger:4317"
+            - name: LOGSTASH_HOST
+              value: "logstash"
+            - name: LOGSTASH_PORT
+              value: "5000"
+            - name: SPRING_CLOUD_CONFIG_SERVER_GIT_BASEDIR
+              value: "/config-repo"
+            - name: SPRING_CLOUD_CONFIG_SERVER_GIT_FORCE__PULL
+              value: "true"
+            - name: MANAGEMENT_HEALTH_DEFAULTS_ENABLED
+              value: "false"
+            - name: MANAGEMENT_HEALTH_DISKSPACE_ENABLED
+              value: "true"
+          volumeMounts:
+            - name: config-repo
+              mountPath: /config-repo
+          ports:
+            - containerPort: 8888
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 8
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            initialDelaySeconds: 120
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+      volumes:
+        - name: config-repo
+          emptyDir: {}

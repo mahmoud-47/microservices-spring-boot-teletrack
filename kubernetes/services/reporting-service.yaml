@@ -1,0 +1,132 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: reporting-service
+  namespace: teletrack360
+spec:
+  selector:
+    app: reporting-service
+  ports:
+    - port: 8084
+      targetPort: 8084
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reporting-service
+  namespace: teletrack360
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: reporting-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: reporting-service
+    spec:
+      initContainers:
+        - name: wait-for-mongo
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - until nc -z mongo 27017; do echo "Waiting for Mongo..."; sleep 2; done
+        - name: wait-for-kafka
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - until nc -z kafka 9092; do echo "Waiting for Kafka..."; sleep 2; done
+        - name: wait-for-config
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until wget -qO- http://config-service:8888/actuator/health 2>/dev/null | grep -q UP; do
+                echo "Waiting for config-service..."; sleep 5
+              done
+      containers:
+        - name: reporting-service
+          image: mahmoudmhd47/teletrack-ms-reporting-service:latest
+          imagePullPolicy: Always
+          envFrom:
+            - secretRef:
+                name: teletrack-secrets
+          env:
+            - name: SPRING_CONFIG_IMPORT
+              value: configserver:http://config-service:8888
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              value: http://discovery-service:8761/eureka/
+            - name: MONGO_USERNAME
+              value: admin
+            - name: MONGO_PASSWORD
+              value: admin
+            - name: MONGO_HOST
+              value: mongo
+            - name: REDIS_HOST
+              value: redis
+            - name: REDIS_PORT
+              value: "6379"
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: kafka:9092
+            - name: AI_SERVICE_URL
+              value: http://ai-service:8085
+            - name: TRACING_URL
+              value: http://jaeger:4317
+            - name: EXECUTOR_CORE_SIZE
+              value: "5"
+            - name: EXECUTOR_MAX_SIZE
+              value: "20"
+            - name: EXECUTOR_QUEUE_CAPACITY
+              value: "500"
+            - name: EXECUTOR_KEEP_ALIVE
+              value: 60s
+            - name: TOMCAT_MAX_THREADS
+              value: "200"
+            - name: TOMCAT_MIN_SPARE_THREADS
+              value: "10"
+            - name: TOMCAT_ACCEPT_COUNT
+              value: "100"
+            - name: TOMCAT_MAX_CONNECTIONS
+              value: "8192"
+            - name: LOGSTASH_HOST
+              value: logstash
+            - name: LOGSTASH_PORT
+              value: "5000"
+          ports:
+            - containerPort: 8084
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8084
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8084
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8084
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi

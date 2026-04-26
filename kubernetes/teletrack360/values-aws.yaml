@@ -1,0 +1,17 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# AWS EKS overrides — apply with: helm install ... -f values-aws.yaml
+# ─────────────────────────────────────────────────────────────────────────────
+
+global:
+  # gp3 StorageClass is created by this chart when this value is set
+  storageClass: gp3
+
+spread:
+  # Spread pods across AZs (nodes are in 2 different AZs)
+  topologyKey: topology.kubernetes.io/zone
+  # Hard requirement — never put 2 replicas in the same AZ
+  whenUnsatisfiable: DoNotSchedule
+
+images:
+  # Always pull from DockerHub so SHA-tagged images are fetched fresh
+  pullPolicy: Always

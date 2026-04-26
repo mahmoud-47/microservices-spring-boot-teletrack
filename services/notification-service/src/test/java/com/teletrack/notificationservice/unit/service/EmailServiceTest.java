@@ -18,7 +18,7 @@ import org.thymeleaf.context.Context;
 
 import java.util.Properties;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -46,15 +46,14 @@ class EmailServiceTest {
     }
 
     @Test
-    @DisplayName("sendEmail — MessagingException does not propagate")
-    void sendEmail_MessagingException_DoesNotPropagate() throws Exception {
+    @DisplayName("sendEmail — MessagingException wraps and propagates as RuntimeException for DLQ retry")
+    void sendEmail_MessagingException_WrapsAndPropagates() throws Exception {
         MimeMessage badMessage = mock(MimeMessage.class);
-        // MimeMessageHelper(multipart=true) calls message.setContent(MimeMultipart) in constructor
         doThrow(new MessagingException("SMTP error"))
                 .when(badMessage).setContent(any(Multipart.class));
         when(mailSender.createMimeMessage()).thenReturn(badMessage);
 
-        assertDoesNotThrow(() ->
+        assertThrows(RuntimeException.class, () ->
                 emailService.sendEmail("recipient@example.com", "Subject", "template", new Context()));
 
         verify(mailSender, never()).send(any(MimeMessage.class));
